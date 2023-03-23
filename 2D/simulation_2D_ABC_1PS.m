@@ -6,7 +6,7 @@
 % time. 
 % ====================================================
 
-function simulation_2D()
+function simulation_2D_ABC_1PS()
     % Start timer
     tic
 
@@ -14,15 +14,17 @@ function simulation_2D()
     % Model parameters
 
     plot_time_steps = true;     % If true, plot time-steps
-    T = 3;                      % Final time
+    T = 1;                      % Final time (seconds)
 
-    % Define boundaries
-    x_l = -1;         % Left boundary of x
-    x_r = 1;          % Right boundary of x
+    % Define boundaries (m)
+    x_l = -5;           % Left boundary of x
+    x_r = 5;            % Right boundary of x
     L_x = x_r-x_l;      % Length of x interval
-    y_l = -1/2;         % Left boundary of y
-    y_r = 1/2;          % Right boundary of y
+    y_l = -5/2;         % Left boundary of y
+    y_r = 5/2;          % Right boundary of y
     L_y = y_r-y_l;      % Length of y interval
+    B = 1;
+    a = 0.8;            % Absorbation
 
     % Number of grid points
     m_x = 200;
@@ -32,14 +34,19 @@ function simulation_2D()
     % ====================================================
     % PDE parameters
 
-    c = 1;              % Wave speed
+    c = 340;              % Wave speed (m/s)
 
     % ====================================================
     % Initial condition parameters
 
-    x_0 = 0;            % Center - x
-    y_0 = 0;            % Center - y
-    o = 0.05;           % Sigma (initial function)
+    x_0 = 0;            % Center - x (point source in room)
+    y_0 = 0;            % Center - y (point source in room)
+    
+    lambda = min([L_x L_y]);    % Shortest wave length resonant with the room
+    f = c/lambda;               % Frequency
+    w = 2*pi*f;                 % Angular frequency (room resonance)
+    %w = 2*pi*1.2561*f;          % Angular frequency (no resonance)
+    amp = 10;                   % Amplitude
 
     % ====================================================
     % SBP-SAT approximation
@@ -50,6 +57,10 @@ function simulation_2D()
     h_y = L_y / (m_y - 1);
     y_vec = linspace(y_l, y_r, m_y);
     [X_vec, Y_vec] = meshgrid(x_vec, y_vec);
+    
+    % Point source discretization
+    ps1_index_x = m_x*(x_0-x_l)/L_x+1;
+    ps1_index_y = m_y*(y_0-y_l)/L_y+1;
 
     % Time discretization
     h_t = 0.1*max([h_x, h_y])/c;
@@ -60,24 +71,28 @@ function simulation_2D()
     [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_6th(m_x, h_x);
     % SBP-SAT
     D_x = c^2*D2_x + c^2*HI_x*e_lx'*d1_lx - c^2*HI_x*e_rx'*d1_rx;
+    Dt_x = - a/B*HI_x*e_lx'*e_lx - a/B*HI_x*e_rx'*e_rx;
 
     % Get D2 operator - y
     [~, HI_y, ~, D2_y, e_ly, e_ry, d1_ly, d1_ry] = sbp_cent_6th(m_y, h_y);
     % SBP-SAT
     D_y = c^2*D2_y + c^2*HI_y*e_ly'*d1_ly - c^2*HI_y*e_ry'*d1_ry;
+    Dt_y = - a/B*HI_y*e_ly'*e_ly - a/B*HI_y*e_ry'*e_ry;
     
-    % SBP operator
+    % SBP operators
     D = sparse(kron(eye(m_y), D_x) + kron(D_y, eye(m_x)));
+    Dt = sparse(kron(eye(m_y), Dt_x) + kron(Dt_y, eye(m_x)));
 
     % Construct matrix: u_t = Au with u = [phi, phi_t]^T
     % [0, I;
-    %  D, 0]
+    %  D, Dt]
     A = sparse(2*m,2*m);
     A(1:m, m+1:end) = speye(m);
     A(m+1:end, 1:m) = D;
+    A(m+1:end, m+1:end) = Dt;
 
     % Set initial values (u = [phi, phi_t]^T)
-    u = [phi_0(X_vec, Y_vec); zeros(m, 1)];
+    u = zeros(2*m, 1);
     t = 0;
     
     % ====================================================
@@ -95,6 +110,7 @@ function simulation_2D()
     
     % Step through time with rk4
     for time_step = 1:m_t
+        u = u + u_ps(t);
         [u,t] = step(u, t, h_t);
         
         % Plot every 10 time steps
@@ -119,9 +135,9 @@ function simulation_2D()
         u_t = A*u;
     end
 
-    % Define initial function
-    function u = phi_0(x, y)
-        u = reshape((exp(-(((x-x_0).^2)./(o^2))-(((y-y_0).^2)./(o^2)))'), m, 1);
+    function v = u_ps(t)
+        v = sparse(2*m, 1);
+        v(m + m_x*ps1_index_y+ps1_index_x) = -amp*sin(w*t);
     end
 
     % Time step with rk4
@@ -135,20 +151,6 @@ function simulation_2D()
         t = t + dt;
     end
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

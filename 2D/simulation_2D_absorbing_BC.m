@@ -6,7 +6,7 @@
 % time. 
 % ====================================================
 
-function simulation_2D()
+function simulation_2D_absorbing_BC()
     % Start timer
     tic
 
@@ -17,12 +17,14 @@ function simulation_2D()
     T = 3;                      % Final time
 
     % Define boundaries
-    x_l = -1;         % Left boundary of x
-    x_r = 1;          % Right boundary of x
+    x_l = -1;           % Left boundary of x
+    x_r = 1;            % Right boundary of x
     L_x = x_r-x_l;      % Length of x interval
     y_l = -1/2;         % Left boundary of y
     y_r = 1/2;          % Right boundary of y
     L_y = y_r-y_l;      % Length of y interval
+    B = 1;
+    a = 0.5;
 
     % Number of grid points
     m_x = 200;
@@ -60,21 +62,25 @@ function simulation_2D()
     [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_6th(m_x, h_x);
     % SBP-SAT
     D_x = c^2*D2_x + c^2*HI_x*e_lx'*d1_lx - c^2*HI_x*e_rx'*d1_rx;
+    Dt_x = - a/B*c^2*HI_x*e_lx'*e_lx - a/B*c^2*HI_x*e_rx'*e_rx;
 
     % Get D2 operator - y
     [~, HI_y, ~, D2_y, e_ly, e_ry, d1_ly, d1_ry] = sbp_cent_6th(m_y, h_y);
     % SBP-SAT
     D_y = c^2*D2_y + c^2*HI_y*e_ly'*d1_ly - c^2*HI_y*e_ry'*d1_ry;
+    Dt_y = - a/B*c^2*HI_y*e_ly'*e_ly - a/B*c^2*HI_y*e_ry'*e_ry;
     
-    % SBP operator
+    % SBP operators
     D = sparse(kron(eye(m_y), D_x) + kron(D_y, eye(m_x)));
+    Dt = sparse(kron(eye(m_y), Dt_x) + kron(Dt_y, eye(m_x)));
 
     % Construct matrix: u_t = Au with u = [phi, phi_t]^T
     % [0, I;
-    %  D, 0]
+    %  D, Dt]
     A = sparse(2*m,2*m);
     A(1:m, m+1:end) = speye(m);
     A(m+1:end, 1:m) = D;
+    A(m+1:end, m+1:end) = Dt;
 
     % Set initial values (u = [phi, phi_t]^T)
     u = [phi_0(X_vec, Y_vec); zeros(m, 1)];
@@ -95,6 +101,7 @@ function simulation_2D()
     
     % Step through time with rk4
     for time_step = 1:m_t
+        disp(u(m+98:m+102))
         [u,t] = step(u, t, h_t);
         
         % Plot every 10 time steps

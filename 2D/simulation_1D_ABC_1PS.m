@@ -6,7 +6,7 @@
 % time. 
 % ====================================================
 
-function simulation_2D()
+function simulation_1D_ABC_1PS()
     % Start timer
     tic
 
@@ -17,17 +17,14 @@ function simulation_2D()
     T = 3;                      % Final time
 
     % Define boundaries
-    x_l = -1;         % Left boundary of x
-    x_r = 1;          % Right boundary of x
+    x_l = -1;           % Left boundary of x
+    x_r = 1;            % Right boundary of x
     L_x = x_r-x_l;      % Length of x interval
-    y_l = -1/2;         % Left boundary of y
-    y_r = 1/2;          % Right boundary of y
-    L_y = y_r-y_l;      % Length of y interval
+    B = 1;
+    a = 0.5;
 
     % Number of grid points
-    m_x = 200;
-    m_y = 100;
-    m = m_x*m_y;
+    m = 200;
 
     % ====================================================
     % PDE parameters
@@ -35,49 +32,38 @@ function simulation_2D()
     c = 1;              % Wave speed
 
     % ====================================================
-    % Initial condition parameters
-
-    x_0 = 0;            % Center - x
-    y_0 = 0;            % Center - y
-    o = 0.05;           % Sigma (initial function)
-
-    % ====================================================
     % SBP-SAT approximation
 
     % Spatial discretization
-    h_x = L_x / (m_x - 1);
-    x_vec = linspace(x_l, x_r, m_x);
-    h_y = L_y / (m_y - 1);
-    y_vec = linspace(y_l, y_r, m_y);
-    [X_vec, Y_vec] = meshgrid(x_vec, y_vec);
+    h_x = L_x / (m - 1);
+    X_vec = linspace(x_l, x_r, m)';
+    
+    % Point source parameters
+    x_0 = 0;
+    ps1_index = m*(x_0-x_l)/L_x+1;
 
     % Time discretization
-    h_t = 0.1*max([h_x, h_y])/c;
+    h_t = 0.1*h_x/c;
     m_t = round(T/h_t,0);
     h_t = T/m_t;
+    %t = 0;
 
     % Get D2 operator - x
-    [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_6th(m_x, h_x);
+    [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_6th(m, h_x);
     % SBP-SAT
     D_x = c^2*D2_x + c^2*HI_x*e_lx'*d1_lx - c^2*HI_x*e_rx'*d1_rx;
-
-    % Get D2 operator - y
-    [~, HI_y, ~, D2_y, e_ly, e_ry, d1_ly, d1_ry] = sbp_cent_6th(m_y, h_y);
-    % SBP-SAT
-    D_y = c^2*D2_y + c^2*HI_y*e_ly'*d1_ly - c^2*HI_y*e_ry'*d1_ry;
-    
-    % SBP operator
-    D = sparse(kron(eye(m_y), D_x) + kron(D_y, eye(m_x)));
+    Dt_x = - a/B*c^2*HI_x*e_lx'*e_lx - a/B*c^2*HI_x*e_rx'*e_rx;
 
     % Construct matrix: u_t = Au with u = [phi, phi_t]^T
     % [0, I;
     %  D, 0]
     A = sparse(2*m,2*m);
+    A(m+1:end, m+1:end) = sparse(Dt_x);
     A(1:m, m+1:end) = speye(m);
-    A(m+1:end, 1:m) = D;
+    A(m+1:end, 1:m) = sparse(D_x);
 
     % Set initial values (u = [phi, phi_t]^T)
-    u = [phi_0(X_vec, Y_vec); zeros(m, 1)];
+    u = zeros(2*m, 1);
     t = 0;
     
     % ====================================================
@@ -85,24 +71,27 @@ function simulation_2D()
     
     % Initialize plot
     if plot_time_steps
-        surf(X_vec, Y_vec, reshape(-u(m+1:end), m_y, m_x));
-        z = [-15 15];
-        axis([x_l x_r y_l y_r z]);
-        pbaspect([L_x L_y min([L_x, L_y])]);
+        %plot(X_vec, -u(m+1:end));
+        plot(X_vec, u(1:m));
+        %z = [-15 15];
+        z = [-2 2];
+        axis([x_l x_r z]);
         drawnow;
-        pause(1);
+        pause(2);
     end
     
     % Step through time with rk4
     for time_step = 1:m_t
+        u = u + u_ps(t);
         [u,t] = step(u, t, h_t);
         
         % Plot every 10 time steps
         if plot_time_steps && mod(time_step,10) == 0
-            surf(X_vec, Y_vec, transpose(reshape(-u(m+1:end), m_x, m_y)));
+            %plot(X_vec, -u(m+1:end));
+            plot(X_vec, u(1:m));
             z = [-15 15];
-            axis([x_l x_r y_l y_r z]);
-            pbaspect([L_x L_y min([L_x, L_y])]);
+            %z = [-2 2];
+            axis([x_l x_r z]);
             drawnow;
             pause(0.01);
         end
@@ -119,9 +108,13 @@ function simulation_2D()
         u_t = A*u;
     end
 
-    % Define initial function
-    function u = phi_0(x, y)
-        u = reshape((exp(-(((x-x_0).^2)./(o^2))-(((y-y_0).^2)./(o^2)))'), m, 1);
+    function v = u_ps(t)
+        v = zeros(2*m, 1);
+        v(ps1_index) = sin(50*t);
+    end
+    
+    function u_t = u_tps(t)
+        u_t = cos(t);
     end
 
     % Time step with rk4
