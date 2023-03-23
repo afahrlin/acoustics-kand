@@ -100,13 +100,13 @@ function simulation_2D_ABC_1PS()
     
     % Initialize plot
     if plot_time_steps
+        figure;
         surf(X_vec, Y_vec, reshape(-u(m+1:end), m_y, m_x));
         z = [-15 15];
         axis([x_l x_r y_l y_r z]);
         pbaspect([L_x L_y min([L_x, L_y])]);
         title('Time: 0 s');
         zlabel('Sound Pressure');
-        drawnow;
         pause(1);
     end
     
@@ -123,7 +123,6 @@ function simulation_2D_ABC_1PS()
             pbaspect([L_x L_y min([L_x, L_y])]);
             title(['Time: ', num2str(time_step*h_t, '%05.4f'), ' s']);
             zlabel('Sound Pressure');
-            drawnow;
             pause(0.01);
         end
     end
