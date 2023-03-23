@@ -106,7 +106,6 @@ def main():
     # Set initial values (u = [phi, phi_t]^T)
     u = vstack((phi_0(X_vec, Y_vec), csc_matrix((m, 1)))).toarray()
     t = 0
-    print(u)
 
     def SPL(u):
         return 20*np.log10(u/0.000002)
