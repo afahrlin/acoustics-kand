@@ -6,7 +6,7 @@
 % time. 
 % ====================================================
 
-function simulation_2D_ABC_1PS()
+function simulation_2D_ABC_2PS()
     % Start timer
     tic
 
@@ -24,7 +24,7 @@ function simulation_2D_ABC_1PS()
     y_r = 5/2;          % Right boundary of y
     L_y = y_r-y_l;      % Length of y interval
     B = 1;
-    a = 0.8;            % Absorbation
+    a = 0.8;            % Absorption
 
     % Number of grid points
     m_x = 200;
@@ -34,7 +34,7 @@ function simulation_2D_ABC_1PS()
     % ====================================================
     % PDE parameters
 
-    c = 340;              % Wave speed (m/s)
+    c = 343;              % Wave speed (m/s)
 
     % ====================================================
     % Initial condition parameters
@@ -46,7 +46,7 @@ function simulation_2D_ABC_1PS()
     k = 0.5;                      % Number of overtones (?)
     f = c/lambda;               % Frequency
     w = k*2*pi*f;               % Angular frequency (room resonance)
-    %w = 1.2561*w;              % Angular frequency (no resonance)
+    %w = 1.1*w;                 % Angular frequency (no resonance)
     amp = 10;                   % Amplitude
 
     % ====================================================
@@ -60,8 +60,12 @@ function simulation_2D_ABC_1PS()
     [X_vec, Y_vec] = meshgrid(x_vec, y_vec);
     
     % Point source discretization
-    ps1_index_x = m_x*(x_0-x_l)/L_x+1;
-    ps1_index_y = m_y*(y_0-y_l)/L_y+1;
+    % ps1_index_x = m_x*(x_0-x_l)/L_x+1;
+    % ps1_index_y = m_y*(y_0-y_l)/L_y+1;
+    
+    % Point source position
+    s1 = m + m_x*round(m_y/4,0) + 1;
+    s2 = m + m_x*round(3*m_y/4,0) + 1;
 
     % Time discretization
     h_t = 0.1*max([h_x, h_y])/c;
@@ -113,7 +117,7 @@ function simulation_2D_ABC_1PS()
     
     % Step through time with rk4
     for time_step = 1:m_t
-        u = u + u_ps(t);
+        u = u + u_ps(t,s1) + u_ps(t,s2);
         [u,t] = step(u, t, h_t);
         
         % Plot every 10 time steps
@@ -139,9 +143,9 @@ function simulation_2D_ABC_1PS()
         u_t = A*u;
     end
 
-    function v = u_ps(t)
+    function v = u_ps(t,i)
         v = sparse(2*m, 1);
-        v(m + m_x*ps1_index_y+ps1_index_x) = -amp*sin(w*t);
+        v(i) = -amp*sin(w*t);
     end
 
     % Time step with rk4
