@@ -21,7 +21,7 @@ function simulation_1D_absorbing_BC()
     x_r = 1;            % Right boundary of x
     L_x = x_r-x_l;      % Length of x interval
     B = 1;
-    a = 0.5;
+    a = 0.8;
 
     % Number of grid points
     m = 200;

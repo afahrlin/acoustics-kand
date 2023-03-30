@@ -43,10 +43,11 @@ function simulation_2D_ABC_2PS()
     y_0 = 0;            % Center - y (point source in room)
     
     lambda = min([L_x L_y]);    % Shortest wave length resonant with the room
-    k = 0.5;                      % Number of overtones (?)
+    k = 2;                      % Number of overtones (?)
     f = c/lambda;               % Frequency
     w = k*2*pi*f;               % Angular frequency (room resonance)
-    %w = 1.1*w;                 % Angular frequency (no resonance)
+    %w = 1.17*w;                 % Angular frequency (no resonance)
+    disp(['Frequency: ', num2str(w/(k*2*pi))]);
     amp = 10;                   % Amplitude
 
     % ====================================================
@@ -75,7 +76,7 @@ function simulation_2D_ABC_2PS()
     % Get D2 operator - x
     [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_6th(m_x, h_x);
     % SBP-SAT
-    D_x = c^2*D2_x + c^2*HI_x*e_lx'*d1_lx - c^2*HI_x*e_rx'*d1_rx;
+    D_x = c^2*D2_x + c^2/B*HI_x*e_lx'*d1_lx - c^2/B*HI_x*e_rx'*d1_rx;
     Dt_x = - a/B*HI_x*e_lx'*e_lx - a/B*HI_x*e_rx'*e_rx;
 
     % Get D2 operator - y

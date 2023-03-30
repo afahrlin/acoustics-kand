@@ -78,6 +78,7 @@ function simulation_2D()
 
     % Set initial values (u = [phi, phi_t]^T)
     u = [phi_0(X_vec, Y_vec); zeros(m, 1)];
+    u = [; zeros(m, 1); phi_0(X_vec, Y_vec)];
     t = 0;
     
     % ====================================================
@@ -86,11 +87,11 @@ function simulation_2D()
     % Initialize plot
     if plot_time_steps
         surf(X_vec, Y_vec, reshape(-u(m+1:end), m_y, m_x));
-        z = [-15 15];
+        z = [-1 1];
         axis([x_l x_r y_l y_r z]);
         pbaspect([L_x L_y min([L_x, L_y])]);
         drawnow;
-        pause(1);
+        pause(2);
     end
     
     % Step through time with rk4
@@ -100,11 +101,11 @@ function simulation_2D()
         % Plot every 10 time steps
         if plot_time_steps && mod(time_step,10) == 0
             surf(X_vec, Y_vec, transpose(reshape(-u(m+1:end), m_x, m_y)));
-            z = [-15 15];
+            z = [-1 1];
             axis([x_l x_r y_l y_r z]);
             pbaspect([L_x L_y min([L_x, L_y])]);
             drawnow;
-            pause(0.01);
+            pause(1);
         end
     end
 
