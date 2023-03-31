@@ -43,9 +43,6 @@ function simulation_2D_ABC_2PS_faster()
 
     % ====================================================
     % Initial condition parameters
-
-    x_0 = 0;            % Center - x (point source in room)
-    y_0 = 0;            % Center - y (point source in room)
     
     lambda = min([L_x L_y]);    % Shortest wave length resonant with the room
     k = 2;                      % Number of overtones (?)
