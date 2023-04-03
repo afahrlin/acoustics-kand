@@ -79,18 +79,18 @@ function R = simulation_2D_ABC_2PS_faster_time()
     % Get D2 operator - x
     [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_6th(m_x, h_x);
     % SBP-SAT
-    D_x = c^2*D2_x + c^2/B*HI_x*e_lx'*d1_lx - c^2/B*HI_x*e_rx'*d1_rx;
-    Dt_x = - a/B*HI_x*e_lx'*e_lx - a/B*HI_x*e_rx'*e_rx;
+    D_x = sparse(c^2*D2_x + c^2/B*HI_x*e_lx'*d1_lx - c^2/B*HI_x*e_rx'*d1_rx);
+    Dt_x = sparse(- a/B*HI_x*e_lx'*e_lx - a/B*HI_x*e_rx'*e_rx);
 
     % Get D2 operator - y
     [~, HI_y, ~, D2_y, e_ly, e_ry, d1_ly, d1_ry] = sbp_cent_6th(m_y, h_y);
     % SBP-SAT
-    D_y = c^2*D2_y + c^2*HI_y*e_ly'*d1_ly - c^2*HI_y*e_ry'*d1_ry;
-    Dt_y = - a/B*HI_y*e_ly'*e_ly - a/B*HI_y*e_ry'*e_ry;
+    D_y = sparse(c^2*D2_y + c^2*HI_y*e_ly'*d1_ly - c^2*HI_y*e_ry'*d1_ry);
+    Dt_y = sparse(- a/B*HI_y*e_ly'*e_ly - a/B*HI_y*e_ry'*e_ry);
     
     % SBP operators
-    D = sparse(kron(speye(m_y), D_x) + kron(D_y, speye(m_x)));
-    Dt = sparse(kron(speye(m_y), Dt_x) + kron(Dt_y, speye(m_x)));
+    D = kron(speye(m_y), D_x) + kron(D_y, speye(m_x));
+    Dt = kron(speye(m_y), Dt_x) + kron(Dt_y, speye(m_x));
 
     % Construct matrix: u_t = Au with u = [phi, phi_t]^T
     % [0, I;
@@ -99,6 +99,7 @@ function R = simulation_2D_ABC_2PS_faster_time()
     A(1:m, m+1:end) = speye(m);
     A(m+1:end, 1:m) = D;
     A(m+1:end, m+1:end) = Dt;
+    toc
 
     % Set initial values (u = [phi, phi_t]^T)
     u = zeros(2*m, 1);

@@ -4,9 +4,14 @@
 % Simulation of the acoustic wave equation in
 % two dimensions. Plots sound pressure over 
 % time. 
+
+% ATTEMPTING TO MAKE IT FASTER //ALVA
+%   - make surf object and update it - CHECK
+%   - more sparse - CHECK
+
 % ====================================================
 
-function simulation_2D_ABC_2PS_test()
+function simulation_2D_ABC_2PSSAT()
     % Start timer
     tic
 
@@ -38,9 +43,6 @@ function simulation_2D_ABC_2PS_test()
 
     % ====================================================
     % Initial condition parameters
-
-    x_0 = 0;            % Center - x (point source in room)
-    y_0 = 0;            % Center - y (point source in room)
     
     lambda = min([L_x L_y]);    % Shortest wave length resonant with the room
     k = 0.5;                      % Number of overtones (?)
@@ -59,14 +61,6 @@ function simulation_2D_ABC_2PS_test()
     h_y = L_y / (m_y - 1);
     y_vec = linspace(y_l, y_r, m_y);
     [X_vec, Y_vec] = meshgrid(x_vec, y_vec);
-    
-    % Point source discretization
-    % ps1_index_x = m_x*(x_0-x_l)/L_x+1;
-    % ps1_index_y = m_y*(y_0-y_l)/L_y+1;
-    
-    % Point source position
-    s1 = m + m_x*round(m_y/4,0) + 1;
-    s2 = m + m_x*round(3*m_y/4,0) + 1;
 
     % Time discretization
     h_t = 0.1*max([h_x, h_y])/c;
@@ -86,8 +80,8 @@ function simulation_2D_ABC_2PS_test()
     Dt_y = - a/B*HI_y*e_ly'*e_ly - a/B*HI_y*e_ry'*e_ry;
     
     % SBP operators
-    D = sparse(kron(eye(m_y), D_x) + kron(D_y, eye(m_x)));
-    Dt = sparse(kron(eye(m_y), Dt_x) + kron(Dt_y, eye(m_x)));
+    D = sparse(kron(speye(m_y), D_x) + kron(D_y, speye(m_x)));
+    Dt = sparse(kron(speye(m_y), Dt_x) + kron(Dt_y, speye(m_x)));
 
     % Construct matrix: u_t = Au with u = [phi, phi_t]^T
     % [0, I;
@@ -106,9 +100,9 @@ function simulation_2D_ABC_2PS_test()
     
     % Initialize plot
     if plot_time_steps
-        figure;
-        surf(X_vec, Y_vec, reshape(-u(m+1:end), m_y, m_x));
-        z = [-10 10];
+        figure('Name', 'Pressure time plot');
+        srf = surf(X_vec, Y_vec, reshape(-u(m+1:end), m_y, m_x));
+        z = [-15 15];
         axis([x_l x_r y_l y_r z]);
         pbaspect([L_x L_y min([L_x, L_y])]);
         title('Time: 0 s');
@@ -118,18 +112,14 @@ function simulation_2D_ABC_2PS_test()
     
     % Step through time with rk4
     for time_step = 1:m_t
-        u = u + u_ps(t,s1) + u_ps(t,s2);
         [u,t] = step(u, t, h_t);
         
         % Plot every 10 time steps
-        if plot_time_steps && mod(time_step,10) == 0
-            surf(X_vec, Y_vec, transpose(reshape(-u(m+1:end), m_x, m_y)));
-            z = [-10 10];
-            axis([x_l x_r y_l y_r z]);
-            pbaspect([L_x L_y min([L_x, L_y])]);
+        if plot_time_steps && mod(time_step,20) == 0
+            srf.ZData = transpose(reshape(-u(m+1:end), m_x, m_y));
+            srf.CData = transpose(reshape(-u(m+1:end), m_x, m_y));
             title(['Time: ', num2str(time_step*h_t, '%05.4f'), ' s']);
-            zlabel('Sound Pressure');
-            pause(1);
+            pause(h_t*10);
         end
     end
 
@@ -141,12 +131,14 @@ function simulation_2D_ABC_2PS_test()
 
     % Define rhs of the semi-discrete approximation
     function u_t = rhs(u)
-        u_t = A*u;
+        u_t = A*u - [sparse(m,1); F(t)];
     end
 
-    function v = u_ps(t,i)
-        v = sparse(2*m, 1);
-        v(i) = -amp*sin(w*t);
+    function v = F(t)
+        g_lx = sparse(1, m_y);
+        g_lx(round(0.25*m_y,0)) = w*amp*sin(w*t);
+        g_lx(round(0.75*m_y,0)) = w*amp*sin(w*t);
+        v = reshape((HI_x*e_lx'*g_lx), m, 1);
     end
 
     % Time step with rk4
@@ -160,12 +152,5 @@ function simulation_2D_ABC_2PS_test()
         t = t + dt;
     end
 end
-
-
-
-
-
-
-
 
 
