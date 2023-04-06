@@ -51,6 +51,7 @@ function get_test_data()
     for i = 1:m_t
         u(:,:,:,i) = f(X_vec, Y_vec, Z_vec, t);
         t = t + h_t;
+        disp(i)
     end
     
     save('test.mat', 'X_vec', 'Y_vec', 'Z_vec', 'u', 'h_t', 'm_t', 'L_x', 'L_y', 'L_z', "-v7.3")

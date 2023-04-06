@@ -4,11 +4,21 @@
 
 
 function visualization_test2()
+    % Load data from previous calculations
     filename = 'test.mat';
     load(filename, 'X_vec', 'Y_vec', 'Z_vec', 'u', 'h_t', 'm_t', 'L_x', 'L_y', 'L_z');
     
+    % Initialize video
+    Video = VideoWriter('Test1_n3_C1', 'MPEG_4');
+    Video.FrameRate(60);
+    open(Video)
+    
+    % Plotting parameters
+    n = 3;      % Plot every nth point in every direction
+    m = 1;      % Plot every mth time step
+    C = 1;      % Size of colored points in scatterplots
+    
     % Reshape and select every nth index to visualize
-    n = 3;
     X = X_vec(1:n:end,1:n:end,1:n:end);
     X = reshape(X, numel(X), 1);
     Y = Y_vec(1:n:end,1:n:end,1:n:end);
@@ -30,7 +40,7 @@ function visualization_test2()
 
     % Plot as a scatter plot, Angle 1
     nexttile([3 3]);
-    sc1 = scatter3(X, Y, Z, 1, U, 'filled');
+    sc1 = scatter3(X, Y, Z, C, U, 'filled');
     view(-31,14)
     xlabel('X')
     ylabel('Y')
@@ -39,7 +49,7 @@ function visualization_test2()
 
     % Plot as a scatter plot, Angle 2
     nexttile([3 3]);
-    sc2 = scatter3(X, Y, Z, 1, U, 'filled');
+    sc2 = scatter3(X, Y, Z, C, U, 'filled');
     view(31,14)
     xlabel('X')
     ylabel('Y')
@@ -48,7 +58,7 @@ function visualization_test2()
 
     % Plot as a scatter plot, Angle 3
     nexttile([4 3]);
-    sc3 = scatter3(X, Y, Z, 1, U, 'filled');
+    sc3 = scatter3(X, Y, Z, C, U, 'filled');
     view(-31,74)
     xlabel('X')
     ylabel('Y')
@@ -58,7 +68,7 @@ function visualization_test2()
 
     % Plot as a scatter plot, Angle 4
     nexttile([4 3]);
-    sc4 = scatter3(X, Y, Z, 1, U, 'filled');
+    sc4 = scatter3(X, Y, Z, C, U, 'filled');
     view(31,74)
     xlabel('X')
     ylabel('Y')
@@ -72,25 +82,26 @@ function visualization_test2()
     cb.Label.String = 'Sound Pressure';
     pause(1);
     
-    m = 1;
-    
     for i = 1:m_t/m
-        tic
+        % Reshape next time step
         U = u(:,:,:,i*m);
         U = U(1:n:end,1:n:end,1:n:end);
         U = reshape(U, numel(U), 1);
-        toc
-        tic
+        
+        % Update data and draw it by updating title
         sc1.CData = U;
         sc2.CData = U;
         sc3.CData = U;
         sc4.CData = U;
-        toc
-        tic
         title(t,['Visualization 2! Time: ', num2str(h_t*(i*m-1))]);
-        pause(0.001);
-        toc
+        
+        % Write the timestep as a frame to the video
+        frame = getframe(gcf);
+        writeVideo(Video, frame);
     end
+    
+    % Close video
+    close(Video)
 end
 
 
