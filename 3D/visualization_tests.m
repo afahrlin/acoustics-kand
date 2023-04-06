@@ -122,7 +122,7 @@ function visualization_tests()
         % Plot as a scatter plot, Angle 3
         ax3 = nexttile([4 3]);
         scatter3(X, Y, Z, 1, U, 'filled')
-        view(-31,76)
+        view(-31,74)
         xlabel('X')
         ylabel('Y')
         zlabel('Z')
@@ -132,7 +132,7 @@ function visualization_tests()
         % Plot as a scatter plot, Angle 3
         ax4 = nexttile([4 3]);
         scatter3(X, Y, Z, 1, U, 'filled')
-        view(31,76)
+        view(31,74)
         xlabel('X')
         ylabel('Y')
         zlabel('Z')
@@ -180,7 +180,7 @@ function visualization_tests()
         % v = sin(X.*Y.*Z);
         
         r = sqrt((X-x_0).^2+(Y-y_0).^2+(Z-z_0).^2);
-        v = sin(2*r);
+        v = sin(4*r);
     end
     
 end
