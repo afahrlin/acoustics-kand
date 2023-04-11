@@ -9,8 +9,8 @@ function visualization_test2()
     load(filename, 'X_vec', 'Y_vec', 'Z_vec', 'u', 'h_t', 'm_t', 'L_x', 'L_y', 'L_z');
     
     % Initialize video
-    Video = VideoWriter('Test1_n3_C1', 'MPEG_4');
-    Video.FrameRate(60);
+    Video = VideoWriter('Test', 'MPEG-4');
+    Video.FrameRate = 60;
     open(Video)
     
     % Plotting parameters
