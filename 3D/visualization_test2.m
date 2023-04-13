@@ -5,17 +5,20 @@
 
 function visualization_test2()
     % Load data from previous calculations
-    filename = 'test.mat';
-    load(filename, 'X_vec', 'Y_vec', 'Z_vec', 'u', 'h_t', 'm_t', 'L_x', 'L_y', 'L_z');
+    filename = '3D_first.mat';
+    load(filename, 'X_vec', 'Y_vec', 'Z_vec', 'U', 'h_t', 'm_t', 'L_x', 'L_y', 'L_z');
+    disp('Load done');
+    U = permute(U,[2,1,3,4]);
+    disp('Perm done');
     
     % Initialize video
-    Video = VideoWriter('Test', 'MPEG-4');
+    Video = VideoWriter('3D_first', 'MPEG-4');
     Video.FrameRate = 60;
     open(Video)
     
     % Plotting parameters
     n = 3;      % Plot every nth point in every direction
-    m = 1;      % Plot every mth time step
+    m = 5;      % Plot every mth time step
     C = 1;      % Size of colored points in scatterplots
     
     % Reshape and select every nth index to visualize
@@ -26,6 +29,7 @@ function visualization_test2()
     Z = Z_vec(1:n:end,1:n:end,1:n:end);
     Z = reshape(Z, numel(Z), 1);
     
+    u = U;
     U = u(:,:,:,1);
     U = U(1:n:end,1:n:end,1:n:end);
     U = reshape(U, numel(U), 1);
@@ -78,6 +82,7 @@ function visualization_test2()
     
     % Add colorbar
     cb = colorbar;
+    caxis([-0.1,0.1]);
     cb.Layout.Tile = 'south';
     cb.Label.String = 'Sound Pressure';
     pause(1);
@@ -93,7 +98,7 @@ function visualization_test2()
         sc2.CData = U;
         sc3.CData = U;
         sc4.CData = U;
-        title(t,['Visualization 2! Time: ', num2str(h_t*(i*m-1))]);
+        title(t,['Visualization! Time: ', num2str(h_t*(i*m-1))]);
         
         % Write the timestep as a frame to the video
         frame = getframe(gcf);

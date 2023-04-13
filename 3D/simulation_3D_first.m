@@ -10,12 +10,14 @@
 function simulation_3D_first()
     % Start timer
     tic
+    close all
 
     % ====================================================
     %% Model parameters
 
     plot_time_steps = true;     % If true, plot time-steps
-    T = 0.2;                      % Final time (seconds)
+    T = 0.07;                      % Final time (seconds)
+    savefile = false;
 
     % Define boundaries (m)
     x_l = -5;           % Left boundary of x
@@ -32,9 +34,9 @@ function simulation_3D_first()
     a = 0.8;            % Absorption
 
     % Number of grid points
-    m_x = 71;
-    m_y = 71;
-    m_z = 71;
+    m_x = 101;
+    m_y = 101;
+    m_z = 101;
     m = m_x*m_y*m_z;
 
     % ====================================================
@@ -49,7 +51,7 @@ function simulation_3D_first()
     k = 2;                      % Which overtone
     f = c/lambda;               % Frequency
     w = k*2*pi*f;               % Angular frequency (room resonance)
-    %w = 1.17*w;                 % Angular frequency (no resonance)
+    w = 1.17*w;                 % Angular frequency (no resonance)
     disp(['Frequency: ', num2str(w/(2*pi))]);
     amp = 50;                   % Amplitude
 
@@ -67,7 +69,7 @@ function simulation_3D_first()
     disp(['Number of gridpoints: ', num2str(size(X_vec))])
 
     % Time discretization
-    h_t = 0.1*max([h_x, h_y, h_z])/c;
+    h_t = 0.25*max([h_x, h_y, h_z])/c;
     m_t = round(T/h_t,0);
     h_t = T/m_t;
     disp(['Simulation time: ', num2str(T), 's'])
@@ -104,13 +106,12 @@ function simulation_3D_first()
     A(1:m, m+1:end) = speye(m);
     A(m+1:end, 1:m) = D;
     A(m+1:end, m+1:end) = E;
-
-    % Set initial values (u = [phi, phi_t]^T)
+    
+    % Set initial values
     [X_vec_plot, Y_vec_plot] = meshgrid(x_vec, y_vec);
     u = zeros(2*m, 1);
-    u(1:m) = phi_0(X_vec, Y_vec, Z_vec);
     t = 0;
-    %U = zeros(m_y, m_x, m_z, m_t);
+    U = zeros(m_y, m_x, m_z, m_t);
     
     % ====================================================
     %% Plot and time step
@@ -119,7 +120,7 @@ function simulation_3D_first()
     if plot_time_steps 
         figure('Name', 'Pressure time plot');
         srf = surf(X_vec_plot, Y_vec_plot, reshape(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1), m_y, m_x));
-        z = [-15 15];
+        z = [-1 1];
         axis([x_l x_r y_l y_r z]);
         pbaspect([L_x L_y min([L_x, L_y])]);
         title('Time: 0 s');
@@ -130,28 +131,31 @@ function simulation_3D_first()
     % Step through time with rk4
     for time_step = 1:m_t
         [u,t] = step(u, t, h_t);
-        
-        %U(:,:,:, time_step) = reshape(u(1:m), m_y, m_x, m_z);
+        U(:,:,:, time_step) = reshape(u(1:m), m_y, m_x, m_z);
+%         UX = ;
+%         UY = u;
+%         UZ = ;
         % Alert every 100th timestep
         if mod(time_step, 100) == 0
             disp(time_step)
         end
         
         % Plot every *insert number* time steps
-        if plot_time_steps && mod(time_step,10) == 0
-%             srf.ZData = transpose(reshape(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1), m_y, m_x));
-%             srf.CData = transpose(reshape(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1), m_y, m_x));             
-            srf.ZData = reshape(transpose(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1)), m_y, m_x);
-            srf.CData = reshape(transpose(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1)), m_y, m_x);
-            title(['Time: ', num2str(time_step*h_t, '%05.4f'), ' s']);
+        if plot_time_steps && mod(time_step,2) == 0
+            srf.ZData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_y, m_x));
+            srf.CData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_y, m_x));             
+%             srf.ZData = reshape(transpose(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1)), m_y, m_x);
+%             srf.CData = reshape(transpose(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1)), m_y, m_x);
+             title(['Time: ', num2str(time_step*h_t, '%05.4f'), ' s']);
             drawnow;
             %pause(0.001);
         end
     end
     
     % Saving data from all timesteps into separate file called test.mat
-    %save('test.mat', 'X_vec', 'Y_vec', 'Z_vec', 'U', 'h_t', 'm_t', 'L_x', 'L_y', 'L_z', "-v7.3")
-
+    if savefile
+        save('3D_first.mat', 'X_vec', 'Y_vec', 'Z_vec', 'U', 'h_t', 'm_t', 'L_x', 'L_y', 'L_z', "-v7.3")
+    end
     % Stop timer
     toc
     
@@ -160,11 +164,7 @@ function simulation_3D_first()
 
     % Define rhs of the semi-discrete approximation
     function u_t = rhs(u)
-        u_t = A*u; % - [sparse(m,1); F(t)];
-    end
-
-    function u = phi_0(x, y, z)
-        u = reshape((1000*exp(-(((x).^2)./(0.05^2)) - (((y).^2)./(0.05^2)) - (((z).^2)./(0.05^2)) )), m, 1);
+        u_t = A*u  - [sparse(m,1); F(t)];
     end
 
     function v = F(t)
