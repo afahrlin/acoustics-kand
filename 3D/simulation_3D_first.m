@@ -1,6 +1,4 @@
-
-% ====================================================
-%% 3D simulation of the acoustic wave equation
+% 3D simulation of the acoustic wave equation
 % 
 % Simulation of the acoustic wave equation in
 % three dimensions. Plots sound pressure over 
@@ -8,17 +6,15 @@
 % ====================================================
 
 function simulation_3D_first()
-    % Start timer
-    tic
-    close all
-
-    % ====================================================
-    %% Model parameters
-
+    
     plot_time_steps = true;     % If true, plot time-steps
+    savefile = false;           % Save data to plot in future?
+    
+    % ====================================================
+    % Model parameters
+    
     T = 0.07;                      % Final time (seconds)
-    savefile = false;
-
+    
     % Define boundaries (m)
     x_l = -5;           % Left boundary of x
     x_r = 5;            % Right boundary of x
@@ -26,8 +22,8 @@ function simulation_3D_first()
     y_l = -5/2;         % Left boundary of y
     y_r = 5/2;          % Right boundary of y
     L_y = y_r-y_l;      % Length of y interval
-    z_l = -5/2;         % Left boundary of z
-    z_r = 5/2;          % Right boundary of z
+    z_l = -5/3;         % Left boundary of z
+    z_r = 5/3;          % Right boundary of z
     L_z = z_r-z_l;      % Length of z interval
     
     B = 1;
@@ -35,8 +31,8 @@ function simulation_3D_first()
 
     % Number of grid points
     m_x = 101;
-    m_y = 101;
-    m_z = 101;
+    m_y = 71;
+    m_z = 81;
     m = m_x*m_y*m_z;
 
     % ====================================================
@@ -51,12 +47,12 @@ function simulation_3D_first()
     k = 2;                      % Which overtone
     f = c/lambda;               % Frequency
     w = k*2*pi*f;               % Angular frequency (room resonance)
-    w = 1.17*w;                 % Angular frequency (no resonance)
+    %w = 1.17*w;                 % Angular frequency (no resonance)
     disp(['Frequency: ', num2str(w/(2*pi))]);
     amp = 50;                   % Amplitude
 
     % ====================================================
-    %% SBP-SAT approximation
+    % SBP-SAT approximation
 
     % Spatial discretization
     h_x = L_x / (m_x - 1);
@@ -114,7 +110,7 @@ function simulation_3D_first()
     U = zeros(m_y, m_x, m_z, m_t);
     
     % ====================================================
-    %% Plot and time step
+    % Plot and time step
     
     % Initialize plot
     if plot_time_steps 
@@ -128,13 +124,11 @@ function simulation_3D_first()
         pause(1);
     end 
     
-    % Step through time with rk4
+    % Step through time with RK4
     for time_step = 1:m_t
         [u,t] = step(u, t, h_t);
-        U(:,:,:, time_step) = reshape(u(1:m), m_y, m_x, m_z);
-%         UX = ;
-%         UY = u;
-%         UZ = ;
+        U(:,:,:, time_step) = reshape(u(1:m), m_y, m_x, m_z);   % For saving
+        
         % Alert every 100th timestep
         if mod(time_step, 100) == 0
             disp(time_step)
@@ -142,13 +136,10 @@ function simulation_3D_first()
         
         % Plot every *insert number* time steps
         if plot_time_steps && mod(time_step,2) == 0
-            srf.ZData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_y, m_x));
-            srf.CData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_y, m_x));             
-%             srf.ZData = reshape(transpose(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1)), m_y, m_x);
-%             srf.CData = reshape(transpose(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1)), m_y, m_x);
-             title(['Time: ', num2str(time_step*h_t, '%05.4f'), ' s']);
+            srf.ZData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
+            srf.CData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));             
+            title(['Time: ', num2str(time_step*h_t, '%05.4f'), ' s']);
             drawnow;
-            %pause(0.001);
         end
     end
     
@@ -156,11 +147,11 @@ function simulation_3D_first()
     if savefile
         save('3D_first.mat', 'X_vec', 'Y_vec', 'Z_vec', 'U', 'h_t', 'm_t', 'L_x', 'L_y', 'L_z', "-v7.3")
     end
-    % Stop timer
+
     toc
     
     % ====================================================
-    %% Define functions used in code
+    % Define functions used in code
 
     % Define rhs of the semi-discrete approximation
     function u_t = rhs(u)
@@ -173,7 +164,7 @@ function simulation_3D_first()
         g_lx(round(0.75*m_y,0), round(m_z*0.5, 0)) = -amp*cos(w*t);
         G_lx = reshape(g_lx, 1, m_y*m_z);
         v = reshape((c^2*HI_x*e_lx'*G_lx), m, 1);
-    end
+    end 
 
     % Time step with rk4
     function [v, t] = step(v, t, dt)
@@ -185,5 +176,4 @@ function simulation_3D_first()
         v = v + 1/6*(k1 + 2*k2 + 2*k3 + k4);
         t = t + dt;
     end
-    clear all
 end
