@@ -30,3 +30,7 @@ Om du vill kopiera  det som ligger i gitmolnet, så att dina egna lokala ändrin
 2. (Du får ett meddelande om att du måste göra stash eller commit för dina ändringar)
 
 3. git stash 
+
+Ett annat sätt, om du råkat committa dina ändringar och det står att du är ahead of main branch:
+
+1. git reset --hard origin/main
