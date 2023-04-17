@@ -166,7 +166,7 @@ function simulation_3D_second()
     
     % Saving all general data regarding this test
     sim_name = append('../Testdata/INFO.mat');
-    save(sim_name, 'key', 'x_vec', 'y_vec', 'z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring')
+    save(sim_name, 'key', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring')
     
     % ====================================================
     % Define functions used in code 
