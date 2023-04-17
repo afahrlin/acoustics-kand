@@ -16,7 +16,7 @@
 
 function simulation_3D_second()
     
-    plot_time_steps = true;     % If true, plot time-steps
+    plot_time_steps = false;     % If true, plot time-steps
     save_time_steps = true;
     
     % ====================================================
@@ -25,23 +25,23 @@ function simulation_3D_second()
     T = 0.05;           % Final time (seconds)
     
     % Define boundaries (m)
-    x_l = -5;           % Left boundary of x
-    x_r = 5;            % Right boundary of x
+    x_l = -7/2;           % Left boundary of x
+    x_r = 7/2;            % Right boundary of x
     L_x = x_r-x_l;      % Length of x interval
-    y_l = -5;           % Left boundary of y
-    y_r = 5;            % Right boundary of y
+    y_l = -5/2;           % Left boundary of y
+    y_r = 5/2;            % Right boundary of y
     L_y = y_r-y_l;      % Length of y interval
-    z_l = -5;           % Left boundary of z
-    z_r = 5;            % Right boundary of z
+    z_l = -3;           % Left boundary of z
+    z_r = 3;            % Right boundary of z
     L_z = z_r-z_l;      % Length of z interval
     
     B = 1;
     a = 0.8;            % Absorption
 
     % Number of grid points
-    m_x = 31;
-    m_y = 21;
-    m_z = 27;
+    m_x = 81;
+    m_y = 71;
+    m_z = 51;
     m = m_x*m_y*m_z;
 
     % ====================================================
