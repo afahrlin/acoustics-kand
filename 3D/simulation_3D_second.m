@@ -3,36 +3,45 @@
 % Simulation of the acoustic wave equation in
 % three dimensions. Plots sound pressure over 
 % time. 
+
+% TRYING TO SAVE SPACE //Alva
+%   - save separate files every time step - CHECK
+%   - implementing the other time stepping method
+
+% TO SAVE YOUR RESULTS
+%   - Create a folder one step outside acoustics-kand named Testdata
+%   %% not yet - Create subfolders there, named after the frequencies you are running
+
 % ====================================================
 
-function simulation_3D_first()
+function simulation_3D_second()
     
     plot_time_steps = true;     % If true, plot time-steps
-    savefile = false;           % Save data to plot in future?
+    save_time_steps = true;
     
     % ====================================================
     % Model parameters
     
-    T = 0.07;                      % Final time (seconds)
+    T = 0.05;           % Final time (seconds)
     
     % Define boundaries (m)
     x_l = -5;           % Left boundary of x
     x_r = 5;            % Right boundary of x
     L_x = x_r-x_l;      % Length of x interval
-    y_l = -5;         % Left boundary of y
-    y_r = 5;          % Right boundary of y
+    y_l = -5;           % Left boundary of y
+    y_r = 5;            % Right boundary of y
     L_y = y_r-y_l;      % Length of y interval
-    z_l = -5;         % Left boundary of z
-    z_r = 5;          % Right boundary of z
+    z_l = -5;           % Left boundary of z
+    z_r = 5;            % Right boundary of z
     L_z = z_r-z_l;      % Length of z interval
     
     B = 1;
     a = 0.8;            % Absorption
 
     % Number of grid points
-    m_x = 21;
+    m_x = 31;
     m_y = 21;
-    m_z = 21;
+    m_z = 27;
     m = m_x*m_y*m_z;
 
     % ====================================================
@@ -48,9 +57,8 @@ function simulation_3D_first()
     f = c/lambda;               % Frequency
     w = k*2*pi*f;               % Angular frequency (room resonance)
     %w = 1.17*w;                 % Angular frequency (no resonance)
-    disp(['Frequency: ', num2str(w/(2*pi))]);
     amp = 50;                   % Amplitude
-
+    
     % ====================================================
     % SBP-SAT approximation
 
@@ -62,14 +70,11 @@ function simulation_3D_first()
     h_z = L_z / (m_z - 1);
     z_vec = linspace(y_l, y_r, m_z);
     [X_vec, Y_vec, Z_vec] = meshgrid(x_vec, y_vec, z_vec);
-    disp(['Number of gridpoints: ', num2str(size(X_vec))])
 
     % Time discretization
     h_t = 0.25*max([h_x, h_y, h_z])/c;
     m_t = round(T/h_t,0);
     h_t = T/m_t;
-    disp(['Simulation time: ', num2str(T), 's'])
-    disp(['Number of steps: ', num2str(m_t)])
 
     % Get D2 operator - x
     [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_6th(m_x, h_x);
@@ -108,7 +113,17 @@ function simulation_3D_first()
     [X_vec_plot, Y_vec_plot] = meshgrid(x_vec, y_vec);
     u = zeros(2*m, 1);
     t = 0;
-    U = zeros(m_y, m_x, m_z, m_t);
+    
+    % ====================================================
+    % INFOSTRING
+    disp(['Frequency: ', num2str(f), ' Hz']);
+    disp(['Number of gridpoints: ', num2str(size(X_vec))])
+    disp(['Simulation time: ', num2str(T), 's'])
+    disp(['Number of steps: ', num2str(m_t)])
+    
+    key = join(string(randi(9,4,1)));
+    key = strrep(key,' ','');
+    infostring = string(append(key, '__', num2str(f), 'Hz_', num2str(m), 'points_', num2str(m_t), 'steps_'));
     
     % ====================================================
     % Plot and time step
@@ -128,12 +143,17 @@ function simulation_3D_first()
     % Step through time with RK4
     for time_step = 1:m_t
         [u,t] = step(u, t, h_t);
-        U(:,:,:, time_step) = reshape(u(1:m), m_y, m_x, m_z);   % For saving
         
-        % Alert every 100th timestep
-        if mod(time_step, 100) == 0
-            disp(time_step)
+        if save_time_steps
+            p = reshape(u(1:m), m_y, m_x, m_z);
+            stepname = append('../Testdata/', infostring, num2str(time_step), '.mat');
+            save(stepname, 'p');
         end
+        
+%         % Alert every 100th timestep
+%         if mod(time_step, 100) == 0
+%             disp(time_step)
+%         end
         
         % Plot every *insert number* time steps
         if plot_time_steps && mod(time_step,2) == 0
@@ -144,19 +164,16 @@ function simulation_3D_first()
         end
     end
     
-    % Saving data from all timesteps into separate file called test.mat
-    if savefile
-        save('3D_first.mat', 'X_vec', 'Y_vec', 'Z_vec', 'U', 'h_t', 'm_t', 'L_x', 'L_y', 'L_z', "-v7.3")
-    end
-
-    toc
+    % Saving all general data regarding this test
+    sim_name = append('../Testdata/INFO.mat');
+    save(sim_name, 'key', 'x_vec', 'y_vec', 'z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring')
     
     % ====================================================
-    % Define functions used in code
+    % Define functions used in code 
 
     % Define rhs of the semi-discrete approximation
-    function u_t = rhs(u)
-        u_t = A*u  - [sparse(m,1); F(t)];
+    function u_t = rhs(u) 
+        u_t = A*u  - [sparse(m,1); F(t)]; 
     end
 
     function v = F(t)

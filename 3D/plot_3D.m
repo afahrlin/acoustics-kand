@@ -3,7 +3,7 @@
 % ====================================================
 
 
-function visualization_test2()
+function plot_3D()
     % Load data from previous calculations
     filename = '3D_first.mat';
     load(filename, 'X_vec', 'Y_vec', 'Z_vec', 'U', 'h_t', 'm_t', 'L_x', 'L_y', 'L_z');
