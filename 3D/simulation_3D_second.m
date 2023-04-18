@@ -1,33 +1,30 @@
 % 3D simulation of the acoustic wave equation
 % 
 % Simulation of the acoustic wave equation in
-% three dimensions. Plots sound pressure over 
-% time. 
-
-% TRYING TO SAVE SPACE //Alva
-%   - save separate files every time step - CHECK
-%   - implementing the other time stepping method
+% three dimensions.
 
 % TO SAVE YOUR RESULTS
 %   - Create a folder one step outside acoustics-kand named Testdata
-%   %% not yet - Create subfolders there, named after the frequencies you are running
+%   - Your tests will be saved there (if true) in a subfolder called
+%     frequencyHz_key, where key is a random 4 digit nr
 
 % ====================================================
 
 function simulation_3D_second()
     
-    plot_time_steps = false;     % If true, plot time-steps
-    save_time_steps = true;
+    plot_time_steps = false;    % If true, plot time-steps
+    save_time_steps = true;     % If true, save time-steps
     
     % ====================================================
     % Model parameters
     
-    T = 0.05;           % Final time (seconds)
+    T = 0.05;             % Final time (seconds)
+    s = 2;                % plot every s time-steps
     
     % Define boundaries (m)
     x_l = -7/2;           % Left boundary of x
     x_r = 7/2;            % Right boundary of x
-    L_x = x_r-x_l;      % Length of x interval
+    L_x = x_r-x_l;        % Length of x interval
     y_l = -5/2;           % Left boundary of y
     y_r = 5/2;            % Right boundary of y
     L_y = y_r-y_l;      % Length of y interval
@@ -39,9 +36,9 @@ function simulation_3D_second()
     a = 0.8;            % Absorption
 
     % Number of grid points
-    m_x = 81;
-    m_y = 71;
-    m_z = 51;
+    m_x = 61;
+    m_y = 51;
+    m_z = 41;
     m = m_x*m_y*m_z;
 
     % ====================================================
@@ -125,6 +122,9 @@ function simulation_3D_second()
     key = strrep(key,' ','');
     infostring = string(append(key, '__', num2str(f), 'Hz_', num2str(m), 'points_', num2str(m_t), 'steps_'));
     
+    location = append('../Testdata/', num2str(f), 'Hz_', num2str(key));
+    mkdir(location);   % create the directory
+    
     % ====================================================
     % Plot and time step
     
@@ -145,18 +145,13 @@ function simulation_3D_second()
         [u,t] = step(u, t, h_t);
         
         if save_time_steps
-            p = reshape(u(1:m), m_y, m_x, m_z);
-            stepname = append('../Testdata/', infostring, num2str(time_step), '.mat');
+            p = reshape(u(1:m), m_x, m_y, m_z);
+            stepname = append(location, '/', num2str(key), '_', num2str(time_step), '.mat');
             save(stepname, 'p');
         end
         
-%         % Alert every 100th timestep
-%         if mod(time_step, 100) == 0
-%             disp(time_step)
-%         end
-        
-        % Plot every *insert number* time steps
-        if plot_time_steps && mod(time_step,2) == 0
+        % Plot every s time steps
+        if plot_time_steps && mod(time_step, s) == 0
             srf.ZData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
             srf.CData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));             
             title(['Time: ', num2str(time_step*h_t, '%05.4f'), ' s']);
@@ -165,7 +160,7 @@ function simulation_3D_second()
     end
     
     % Saving all general data regarding this test
-    sim_name = append('../Testdata/INFO.mat');
+    sim_name = append(location, '/INFO.mat');
     save(sim_name, 'key', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring')
     
     % ====================================================

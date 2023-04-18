@@ -1,17 +1,25 @@
 % Plot 3D in 2D
+% Run in command window
+% simname = frequencyHz_key (string)
 
 % TO PLOT YOUR RESULTS
-%   - Keep your data in a folder one step outside acoustics-kand, named Testdata
+%   - Data should be located one step outside git folder, in a subfolder
+%   called /Testdata/simname
 
 
-function plot_layer()
-    load('../Testdata/INFO.mat', 'key', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'L_x', 'L_y', 'L_z', 'infostring');
+function plot_layer(simname)
+    % Load general data
+    location = append('../Testdata/', num2str(simname), '/');
+    info = append(location, 'INFO.mat');
+    load(info, 'key', 'X_vec', 'Y_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'L_x', 'L_y', 'infostring');
+    disp('Load done');
     
     % Set initial values
-    disp(size(X_vec))
     
     X = X_vec(:,:,round(m_z/2));
     Y = Y_vec(:,:,round(m_z/2));
+    
+    s = 2;  % plot every s timesteps
     
     % Prepare plot
     figure('Name', 'Pressure time plot');
@@ -29,17 +37,16 @@ function plot_layer()
     pause(1);
     
     % Time step
-    for time_step = 1:m_t
-        step_file = append('../Testdata/', infostring, num2str(time_step), '.mat');
+    for time_step = 1:s:m_t
+        step_file = append(location, num2str(key), '_', num2str(time_step), '.mat');
 
         load(step_file, 'p');
-        P = reshape(p, m_y*m_x*m_z, 1);
-        P = transpose(reshape(P((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
-
-        if mod(time_step,2) == 0
-            srf.CData = P;             
-            title(['Time: ', num2str(time_step*h_t, '%05.4f'), ' s']);
-            drawnow;
-        end
+        U = reshape(p, m_y*m_x*m_z, 1);
+        U = transpose(reshape(U((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
+        
+        srf.CData = U;    
+        %srf.ZData = U; 
+        title(['Time: ', num2str((time_step-1)*h_t, '%05.4f'), ' s']);
+        drawnow;
     end
 end

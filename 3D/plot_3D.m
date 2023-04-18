@@ -1,27 +1,33 @@
-% ====================================================
-% Test of visualization of some 3D data with motion
+% Plotting 3D data as scattered grid
+
+% Run in command window
+% simname = frequencyHz_key (string)
+
+% TO PLOT YOUR RESULTS
+%   - Data should be located one step outside git folder, in a subfolder
+%   called /Testdata/simname
+
 % ====================================================
 
-
-function plot_3D()
-    % Load data from previous calculations
-    filename = '3D_first.mat';
-    load(filename, 'X_vec', 'Y_vec', 'Z_vec', 'U', 'h_t', 'm_t', 'L_x', 'L_y', 'L_z');
+function plot_3D(simname)
+    
+    % Load general data
+    location = append('../Testdata/', num2str(simname), '/');
+    info = append(location, 'INFO.mat');
+    load(info, 'key', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'L_x', 'L_y', 'L_z', 'infostring');
     disp('Load done');
-    U = permute(U,[2,1,3,4]);
-    disp('Perm done');
     
     % Initialize video
-    Video = VideoWriter('3D_first', 'MPEG-4');
+    Video = VideoWriter(append(location, num2str(simname), '_video'), 'MPEG-4');
     Video.FrameRate = 60;
     open(Video)
     
     % Plotting parameters
-    n = 3;      % Plot every nth point in every direction
+    n = 2;      % Plot every nth point in every direction
     m = 5;      % Plot every mth time step
     C = 1;      % Size of colored points in scatterplots
     
-    % Reshape and select every nth index to visualize
+    % Reshape and select every nth index to visualize    
     X = X_vec(1:n:end,1:n:end,1:n:end);
     X = reshape(X, numel(X), 1);
     Y = Y_vec(1:n:end,1:n:end,1:n:end);
@@ -29,10 +35,7 @@ function plot_3D()
     Z = Z_vec(1:n:end,1:n:end,1:n:end);
     Z = reshape(Z, numel(Z), 1);
     
-    u = U;
-    U = u(:,:,:,1);
-    U = U(1:n:end,1:n:end,1:n:end);
-    U = reshape(U, numel(U), 1);
+    U = zeros(numel(Z),1);
     
     % Initialize plot ===============================
     % Visualize 4 different angles used a tiledlayout
@@ -40,7 +43,8 @@ function plot_3D()
     fig = gcf;
     fig.Position = [0, 0, 1000, 1000];
     t.Padding = 'compact';
-    title(t,'Visualization 2! Time: 0');
+    title(t,'3D Visualization! Time: 0');
+    cax = [-0.2, 0.2];
 
     % Plot as a scatter plot, Angle 1
     nexttile([3 3]);
@@ -49,6 +53,7 @@ function plot_3D()
     xlabel('X')
     ylabel('Y')
     zlabel('Z')
+    caxis(cax);
     pbaspect([L_x L_y L_z]);
 
     % Plot as a scatter plot, Angle 2
@@ -58,6 +63,7 @@ function plot_3D()
     xlabel('X')
     ylabel('Y')
     zlabel('Z')
+    caxis(cax);
     pbaspect([L_x L_y L_z]);
 
     % Plot as a scatter plot, Angle 3
@@ -67,7 +73,7 @@ function plot_3D()
     xlabel('X')
     ylabel('Y')
     zlabel('Z')
-    %ylim([y_l y_r]);
+    caxis(cax);
     pbaspect([L_x L_y L_z]);
 
     % Plot as a scatter plot, Angle 4
@@ -77,28 +83,29 @@ function plot_3D()
     xlabel('X')
     ylabel('Y')
     zlabel('Z')
-    %ylim([y_l y_r]);
+    caxis(cax);
     pbaspect([L_x L_y L_z]);
     
     % Add colorbar
     cb = colorbar;
-    caxis([-0.1,0.1]);
     cb.Layout.Tile = 'south';
     cb.Label.String = 'Sound Pressure';
     pause(1);
     
-    for i = 1:m_t/m
-        % Reshape next time step
-        U = u(:,:,:,i*m);
-        U = U(1:n:end,1:n:end,1:n:end);
-        U = reshape(U, numel(U), 1);
+    for time_step = 1:m:m_t
+        step_file = append(location, num2str(key), '_', num2str(time_step), '.mat');
+        load(step_file, 'p');
+        U = permute(p, [2,1,3]);
         
-        % Update data and draw it by updating title
+        U = U(1:n:end, 1:n:end, 1:n:end);
+        U = reshape(U, numel(U), 1);
+
         sc1.CData = U;
         sc2.CData = U;
         sc3.CData = U;
         sc4.CData = U;
-        title(t,['Visualization! Time: ', num2str(h_t*(i*m-1))]);
+        title(t,append('3D Visualization! Time: ', num2str((time_step-1)*h_t), ' s'));
+        drawnow;
         
         % Write the timestep as a frame to the video
         frame = getframe(gcf);
