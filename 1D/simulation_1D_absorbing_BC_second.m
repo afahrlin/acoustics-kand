@@ -17,8 +17,8 @@ function simulation_1D_absorbing_BC()
     T = 3;                      % Final time
 
     % Define boundaries
-    x_l = -1;           % Left boundary of x
-    x_r = 1;            % Right boundary of x
+    x_l = -343;           % Left boundary of x
+    x_r = 343;            % Right boundary of x
     L_x = x_r-x_l;      % Length of x interval
 
 
@@ -28,9 +28,9 @@ function simulation_1D_absorbing_BC()
     % ====================================================
     % PDE parameters
 
-    c = 1;              % Wave speed
-    B = 1;
-    a = 1;
+    c = 343;              % Wave speed
+    B = c;
+    a = 0.5;
     
     % ====================================================
     % Initial condition parameters
@@ -54,17 +54,17 @@ function simulation_1D_absorbing_BC()
     [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_6th(m, h_x);
     % SBP-SAT
     D_x = c^2*D2_x + c^2*HI_x*e_lx'*d1_lx - c^2*HI_x*e_rx'*d1_rx;
-    Dt_x = - a/B*c^2*HI_x*e_lx'*e_lx - a/B*c^2*HI_x*e_rx'*e_rx;
+    E_x = - a/B*c^2*HI_x*e_lx'*e_lx - a/B*c^2*HI_x*e_rx'*e_rx;
 
     % Construct matrix: u_t = Au with u = [phi, phi_t]^T
     % [0, I;
-    %  D, 0]
+    %  D, E]
     A = sparse(2*m,2*m);
-    A(m+1:end, m+1:end) = sparse(Dt_x);
+    A(m+1:end, m+1:end) = sparse(E_x);
     A(1:m, m+1:end) = speye(m);
     A(m+1:end, 1:m) = sparse(D_x);
 
-    % Set initial values (u = [phi, phi_t]^T)
+    % Set initial values (u = [u, u_t]^T)
     u = [phi_0(X_vec); zeros(m, 1)];
     t = 0;
     
@@ -111,7 +111,7 @@ function simulation_1D_absorbing_BC()
 
     % Define initial function
     function u = phi_0(x)
-        u = exp(-(((x-x_0).^2)./(o^2)));
+        u = exp(-((((x-x_0)/343/10).^2)./(o^2)));
     end
 
     % Time step with rk4

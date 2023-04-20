@@ -6,7 +6,7 @@
 % time. 
 % ====================================================
 
-function simulation_1D_absorbing_BC()
+function simulation_1D_absorbing_BC_third()
     % Start timer
     tic
 
@@ -14,11 +14,11 @@ function simulation_1D_absorbing_BC()
     % Model parameters
 
     plot_time_steps = true;     % If true, plot time-steps
-    T = 3;                      % Final time
+    T = 2;                      % Final time
 
     % Define boundaries
-    x_l = -1;           % Left boundary of x
-    x_r = 1;            % Right boundary of x
+    x_l = -343;           % Left boundary of x
+    x_r = 343;            % Right boundary of x
     L_x = x_r-x_l;      % Length of x interval
 
 
@@ -28,8 +28,9 @@ function simulation_1D_absorbing_BC()
     % ====================================================
     % PDE parameters
 
-    c = 1;              % Wave speed
-    B = 1;
+    c = 343;              % Wave speed
+    %B = 9.76*c^3;
+    B = c;
     a = 1;
     
     % ====================================================
@@ -46,26 +47,19 @@ function simulation_1D_absorbing_BC()
     X_vec = linspace(x_l, x_r, m)';
 
     % Time discretization
-    h_t = 0.1*h_x/c;
+    h_t = 0.01*h_x/c;
     m_t = round(T/h_t,0);
     h_t = T/m_t;
 
     % Get D2 operator - x
     [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_6th(m, h_x);
     % SBP-SAT
-    D_x = c^2*D2_x + c^2*HI_x*e_lx'*d1_lx - c^2*HI_x*e_rx'*d1_rx;
-    Dt_x = - a/B*c^2*HI_x*e_lx'*e_lx - a/B*c^2*HI_x*e_rx'*e_rx;
+    D = c^2*D2_x + c^2*HI_x*e_lx'*d1_lx - c^2*HI_x*e_rx'*d1_rx;
+    E = - a/B*c^2*HI_x*e_lx'*e_lx - a/B*c^2*HI_x*e_rx'*e_rx;
 
-    % Construct matrix: u_t = Au with u = [phi, phi_t]^T
-    % [0, I;
-    %  D, 0]
-    A = sparse(2*m,2*m);
-    A(m+1:end, m+1:end) = sparse(Dt_x);
-    A(1:m, m+1:end) = speye(m);
-    A(m+1:end, 1:m) = sparse(D_x);
-
-    % Set initial values (u = [phi, phi_t]^T)
-    u = [phi_0(X_vec); zeros(m, 1)];
+    % Set initial values (u = [u, u_t]^T)
+    u = phi_0(X_vec);
+    u_prev = phi_0(X_vec);
     t = 0;
     
     % ====================================================
@@ -84,7 +78,7 @@ function simulation_1D_absorbing_BC()
     
     % Step through time with rk4
     for time_step = 1:m_t
-        [u,t] = step(u, t, h_t);
+        [u,u_prev,t] = step(u, u_prev, h_t, t);
         
         % Plot every 10 time steps
         if plot_time_steps && mod(time_step,10) == 0
@@ -104,24 +98,15 @@ function simulation_1D_absorbing_BC()
     % ====================================================
     % Define functions used in code
 
-    % Define rhs of the semi-discrete approximation
-    function u_t = rhs(u)
-        u_t = A*u;
-    end
-
     % Define initial function
     function u = phi_0(x)
-        u = exp(-(((x-x_0).^2)./(o^2)));
+        u = 2*exp(-((((x-x_0)/343).^2)./(o^2)));
     end
 
-    % Time step with rk4
-    function [v, t] = step(v, t, dt)
-        k1 = dt*rhs(v);
-        k2 = dt*rhs(v+0.5*k1);
-        k3 = dt*rhs(v+0.5*k2);
-        k4 = dt*rhs(v+k3);
+    function [v_new, v, t] = step(v, v_prev, dt, t)
+        vh_new = dt^2*D*v + 2*v - v_prev;
+        v_new = vh_new + E*(vh_new-v_prev)/(2*dt);
 
-        v = v + 1/6*(k1 + 2*k2 + 2*k3 + k4);
         t = t + dt;
     end
 end

@@ -13,7 +13,7 @@
 
 % ====================================================
 
-function simulation_3D_fourth()
+function simulation_3D_test()
     
     plot_time_steps = true;     % If true, plot time-steps
     save_time_steps = false;
@@ -24,20 +24,20 @@ function simulation_3D_fourth()
     T = 5;           % Final time (seconds)
     
     % Define boundaries (m)
-    x_l = -7/2;           % Left boundary of x
-    x_r = 7/2;            % Right boundary of x
+    x_l = -343;           % Left boundary of x
+    x_r = 343;            % Right boundary of x
     L_x = x_r-x_l;      % Length of x interval
-    y_l = -7/2;           % Left boundary of y
-    y_r = 7/2;            % Right boundary of y
+    y_l = -343;           % Left boundary of y
+    y_r = 343;            % Right boundary of y
     L_y = y_r-y_l;      % Length of y interval
-    z_l = -7/2;           % Left boundary of z
-    z_r = 7/2;            % Right boundary of z
+    z_l = -343;           % Left boundary of z
+    z_r = 343;            % Right boundary of z
     L_z = z_r-z_l;      % Length of z interval
 
     % Number of grid points
-    m_x = 51;
-    m_y = 41;
-    m_z = 41;
+    m_x = 71;
+    m_y = 71;
+    m_z = 71;
     m = m_x*m_y*m_z;
 
     % ====================================================
@@ -45,19 +45,17 @@ function simulation_3D_fourth()
 
     c = 343;              % Wave speed (m/s)
     beta_2 = c;
-    beta_3 = 0.2;            % Absorption
+    beta_3 = 0.5;            % Absorption
 
     % ====================================================
     % Initial condition parameters
     
-    lambda = max([L_x L_y L_z]); % Shortest wave resonant with the room
-    k = 2;                      % Which overtone
-    f = k*c/lambda;              % Frequency
-    f = 110;
-    w = 2*pi*f;               % Angular frequency (room resonance)
-    %w = 2*w/1.73;                 % Angular frequency (no resonance)
-    %w = w*1.125;
-    amp = 4*pi*3;                   % Amplitude
+%     lambda = max([L_x L_y L_z]); % Shortest wave resonant with the room
+%     k = 1;                      % Which overtone
+%     f = k*c/lambda;               % Frequency
+%     w = 2*pi*f;               % Angular frequency (room resonance)
+%     %w = 1.17*w;                 % Angular frequency (no resonance)
+%     amp = 10;                   % Amplitude
     
     % ====================================================
     % SBP-SAT approximation
@@ -72,7 +70,7 @@ function simulation_3D_fourth()
     [X_vec, Y_vec, Z_vec] = meshgrid(x_vec, y_vec, z_vec);
 
     % Time discretization
-    h_t = 0.25*max([h_x, h_y, h_z])/c;
+    h_t = 0.1*max([h_x, h_y, h_z])/c;
     m_t = round(T/h_t,0);
     h_t = T/m_t;
 
@@ -111,19 +109,11 @@ function simulation_3D_fourth()
     
     % Set initial values
     [X_vec_plot, Y_vec_plot] = meshgrid(x_vec, y_vec);
-    u = zeros(2*m, 1);
+    u = [u_0(X_vec, Y_vec, Z_vec); zeros(m, 1)];
     t = 0;
     
     % ====================================================
     % INFOSTRING
-    disp(['Frequency: ', num2str(w/(2*pi)), ' Hz']);
-    disp(['Number of gridpoints: ', num2str(size(X_vec))])
-    disp(['Simulation time: ', num2str(T), 's'])
-    disp(['Number of steps: ', num2str(m_t)])
-    
-    key = join(string(randi(9,4,1)));
-    key = strrep(key,' ','');
-    infostring = string(append(key, '__', num2str(f), 'Hz_', num2str(m), 'points_', num2str(m_t), 'steps_'));
     
     % ====================================================
     % Plot and time step
@@ -140,15 +130,14 @@ function simulation_3D_fourth()
         
         % Add colorbar
         cb = colorbar;
-        caxis([-1,1]);
+        caxis([-0.5,0.5]);
         cb.Label.String = 'Sound Pressure';
         pause(1);
     end 
     
     % Step through time with RK4
     for time_step = 1:m_t
-        [u,t] = steprk4(u, t, h_t);
-        %u = F2(t, u);
+        [u,t] = step(u, t, h_t);
         
         if save_time_steps
             p = reshape(u(1:m), m_y, m_x, m_z);
@@ -164,20 +153,16 @@ function simulation_3D_fourth()
         % Plot every *insert number* time steps
         if plot_time_steps && mod(time_step,4) == 0
             srf.ZData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
-            srf.CData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
-            %srf.ZData = transpose(reshape(u((round(0*m_z,0))*m_x*m_y+1:(round(0*m_z,0)+1)*m_x*m_y), m_x, m_y));
-            %srf.CData = transpose(reshape(u((round(0*m_z,0))*m_x*m_y+1:(round(0*m_z,0)+1)*m_x*m_y), m_x, m_y));
+            srf.CData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));             
             title(['Time: ', num2str(time_step*h_t, '%05.4f'), ' s']);
             drawnow;
-            pause(0.1)
+            %pause(0.1);
         end
     end
     
-    if save_time_steps
-        % Saving all general data regarding this test
-        sim_name = append('../Testdata/INFO.mat');
-        save(sim_name, 'key', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring')
-    end
+    % Saving all general data regarding this test
+    sim_name = append('../Testdata/INFO.mat');
+    save(sim_name, 'key', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring')
     
     % ====================================================
     % Define functions used in code 
@@ -185,6 +170,12 @@ function simulation_3D_fourth()
     % Define rhs of the semi-discrete approximation
     function u_t = rhs(u) 
         u_t = A*u;  %- [sparse(m,1); F2(t)]; 
+    end
+
+    function u = u_0(X, Y, Z)
+        u = 20*exp(-(X/343/4).^2./0.05^2-(Y/343/4).^2./0.05^2-(Z/343/4).^2./0.05^2);
+        u = permute(u, [2 1 3]);
+        u = reshape(u, numel(X), 1);
     end
 
     function v = F(t)
@@ -196,22 +187,15 @@ function simulation_3D_fourth()
     end 
 
     function v = F2(t, v)
-        v(round(m_x*m_y*m_z/2, 0)+m_x*m_y) = amp*sin(w*t);
-        %v((round(m_x*m_y*m_z/2, 0) + round(m_x)*round(0.75*m_y, 0))+round(0.5*m_x*m_y)) = amp*sin(w*t);
-        
-        %v(m_x*m_y*m_z+(round(m_x*m_y*m_z/2, 0)+round(m_x)*round(0.25*m_y, 0))+round(0.5*m_x*m_y)) = w*amp*sin(w*t);
-        %v(m_x*m_y*m_z+(round(m_x*m_y*m_z/2, 0) + round(m_x)*round(0.75*m_y, 0))+round(0.5*m_x*m_y)) = w*amp*sin(w*t);
+        v((round(m_x*m_y*m_z/2, 0) + round(m_x)*round(0.25*m_y, 0))+round(0.5*m_x*m_y)) = -amp*cos(w*t);
+        v((round(m_x*m_y*m_z/2, 0) + round(m_x)*round(0.75*m_y, 0))+round(0.5*m_x*m_y)) = -amp*cos(w*t);
     end
 
     % Time step with rk4
-    function [v, t] = steprk4(v, t, dt)
-        v = F2(t, v);
+    function [v, t] = step(v, t, dt)
         k1 = dt*rhs(v);
-        v = F2(t+dt/4, v);
         k2 = dt*rhs(v+0.5*k1);
-        v = F2(t+dt/2, v);
         k3 = dt*rhs(v+0.5*k2);
-        v = F2(t+3*dt/4, v);
         k4 = dt*rhs(v+k3);
 
         v = v + 1/6*(k1 + 2*k2 + 2*k3 + k4);

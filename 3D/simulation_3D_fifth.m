@@ -13,7 +13,7 @@
 
 % ====================================================
 
-function simulation_3D_fourth()
+function simulation_3D_fifth()
     
     plot_time_steps = true;     % If true, plot time-steps
     save_time_steps = false;
@@ -44,20 +44,18 @@ function simulation_3D_fourth()
     % PDE parameters
 
     c = 343;              % Wave speed (m/s)
-    beta_2 = c;
-    beta_3 = 0.2;            % Absorption
+    beta_2 = 9.76*c^3;
+    beta_3 = 1;            % Absorption
 
     % ====================================================
     % Initial condition parameters
     
     lambda = max([L_x L_y L_z]); % Shortest wave resonant with the room
     k = 2;                      % Which overtone
-    f = k*c/lambda;              % Frequency
-    f = 110;
+    f = k*c/lambda;               % Frequency
     w = 2*pi*f;               % Angular frequency (room resonance)
-    %w = 2*w/1.73;                 % Angular frequency (no resonance)
-    %w = w*1.125;
-    amp = 4*pi*3;                   % Amplitude
+    %w = 1.17*w;                 % Angular frequency (no resonance)
+    amp = 1;                   % Amplitude
     
     % ====================================================
     % SBP-SAT approximation
@@ -72,7 +70,7 @@ function simulation_3D_fourth()
     [X_vec, Y_vec, Z_vec] = meshgrid(x_vec, y_vec, z_vec);
 
     % Time discretization
-    h_t = 0.25*max([h_x, h_y, h_z])/c;
+    h_t = 0.1*max([h_x, h_y, h_z])/c;
     m_t = round(T/h_t,0);
     h_t = T/m_t;
 
@@ -100,23 +98,17 @@ function simulation_3D_fourth()
     
     E_xy = sparse(kron(speye(m_y), E_x) + kron(E_y, speye(m_x)));
     E = sparse(kron(speye(m_z), E_xy) + kron(E_z, speye(m_x*m_y)));
-
-    % Construct matrix A: u_t = Au with u = [phi, phi_t]^T
-    % [0, I;
-    %  D, E]
-    A = sparse(2*m,2*m);
-    A(1:m, m+1:end) = speye(m);
-    A(m+1:end, 1:m) = D;
-    A(m+1:end, m+1:end) = E;
+    disp('Operators done')
     
     % Set initial values
     [X_vec_plot, Y_vec_plot] = meshgrid(x_vec, y_vec);
-    u = zeros(2*m, 1);
+    u = zeros(m, 1);
+    u_prev = zeros(m, 1);
     t = 0;
     
     % ====================================================
     % INFOSTRING
-    disp(['Frequency: ', num2str(w/(2*pi)), ' Hz']);
+    disp(['Frequency: ', num2str(f), ' Hz']);
     disp(['Number of gridpoints: ', num2str(size(X_vec))])
     disp(['Simulation time: ', num2str(T), 's'])
     disp(['Number of steps: ', num2str(m_t)])
@@ -147,8 +139,8 @@ function simulation_3D_fourth()
     
     % Step through time with RK4
     for time_step = 1:m_t
-        [u,t] = steprk4(u, t, h_t);
-        %u = F2(t, u);
+        %[u,t] = steprk4(u, t, h_t);
+        [u, u_prev, t] = step(u, u_prev, h_t, t);
         
         if save_time_steps
             p = reshape(u(1:m), m_y, m_x, m_z);
@@ -162,59 +154,38 @@ function simulation_3D_fourth()
 %         end
         
         % Plot every *insert number* time steps
-        if plot_time_steps && mod(time_step,4) == 0
+        if plot_time_steps && mod(time_step,1) == 0
             srf.ZData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
-            srf.CData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
-            %srf.ZData = transpose(reshape(u((round(0*m_z,0))*m_x*m_y+1:(round(0*m_z,0)+1)*m_x*m_y), m_x, m_y));
-            %srf.CData = transpose(reshape(u((round(0*m_z,0))*m_x*m_y+1:(round(0*m_z,0)+1)*m_x*m_y), m_x, m_y));
+            srf.CData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));             
             title(['Time: ', num2str(time_step*h_t, '%05.4f'), ' s']);
             drawnow;
-            pause(0.1)
         end
     end
     
-    if save_time_steps
-        % Saving all general data regarding this test
-        sim_name = append('../Testdata/INFO.mat');
-        save(sim_name, 'key', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring')
-    end
+    % Saving all general data regarding this test
+    sim_name = append('../Testdata/INFO.mat');
+    save(sim_name, 'key', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring')
     
     % ====================================================
     % Define functions used in code 
 
-    % Define rhs of the semi-discrete approximation
-    function u_t = rhs(u) 
-        u_t = A*u;  %- [sparse(m,1); F2(t)]; 
-    end
-
-    function v = F(t)
-        g_lx = sparse(m_y, m_z);
-        g_lx(round(0.25*m_y,0), round(m_z*0.5, 0)) = -amp*cos(w*t);
-        g_lx(round(0.75*m_y,0), round(m_z*0.5, 0)) = -amp*cos(w*t);
-        G_lx = reshape(g_lx, 1, m_y*m_z);
-        v = reshape((c^2*HI_x*e_lx'*G_lx), m, 1);
-    end 
-
     function v = F2(t, v)
-        v(round(m_x*m_y*m_z/2, 0)+m_x*m_y) = amp*sin(w*t);
-        %v((round(m_x*m_y*m_z/2, 0) + round(m_x)*round(0.75*m_y, 0))+round(0.5*m_x*m_y)) = amp*sin(w*t);
+        v((round(m_x*m_y*m_z/2, 0) + round(m_x)*round(0.25*m_y, 0))+round(0.5*m_x*m_y)) = amp*sin(w*t);
+        v((round(m_x*m_y*m_z/2, 0) + round(m_x)*round(0.75*m_y, 0))+round(0.5*m_x*m_y)) = amp*sin(w*t);
         
         %v(m_x*m_y*m_z+(round(m_x*m_y*m_z/2, 0)+round(m_x)*round(0.25*m_y, 0))+round(0.5*m_x*m_y)) = w*amp*sin(w*t);
         %v(m_x*m_y*m_z+(round(m_x*m_y*m_z/2, 0) + round(m_x)*round(0.75*m_y, 0))+round(0.5*m_x*m_y)) = w*amp*sin(w*t);
     end
 
-    % Time step with rk4
-    function [v, t] = steprk4(v, t, dt)
+    function [v_new, v, t] = step(v, v_prev, dt, t)
         v = F2(t, v);
-        k1 = dt*rhs(v);
-        v = F2(t+dt/4, v);
-        k2 = dt*rhs(v+0.5*k1);
-        v = F2(t+dt/2, v);
-        k3 = dt*rhs(v+0.5*k2);
-        v = F2(t+3*dt/4, v);
-        k4 = dt*rhs(v+k3);
+        vh_new = dt^2*D*v + 2*v - v_prev;
+        v_new = vh_new + E*(vh_new-v_prev)/(2*dt);
 
-        v = v + 1/6*(k1 + 2*k2 + 2*k3 + k4);
         t = t + dt;
     end
 end
+
+
+
+
