@@ -14,7 +14,7 @@ function plot_3D(simname)
     % Load general data
     location = append('../Testdata/', num2str(simname), '/');
     info = append(location, 'INFO.mat');
-    load(info, 'key', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'L_x', 'L_y', 'L_z', 'infostring');
+    load(info, 'key', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'L_x', 'L_y', 'L_z');
     disp('Load done');
     
     % Initialize video
@@ -39,7 +39,7 @@ function plot_3D(simname)
     
     % Initialize plot ===============================
     % Visualize 4 different angles used a tiledlayout
-    t = tiledlayout(7,6,"TileSpacing","compact");
+    t = tiledlayout(7,6,"TileSpacing","compact"); 
     fig = gcf;
     fig.Position = [0, 0, 1000, 1000];
     t.Padding = 'compact';
@@ -104,7 +104,7 @@ function plot_3D(simname)
         sc2.CData = U;
         sc3.CData = U;
         sc4.CData = U;
-        title(t,append('3D Visualization! Time: ', num2str((time_step-1)*h_t), ' s'));
+        title(t,append('Sound pressure at Time: ', num2str((time_step-1)*h_t), ' s'));
         drawnow;
         
         % Write the timestep as a frame to the video

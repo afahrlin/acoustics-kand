@@ -4,24 +4,23 @@
 % three dimensions. Plots sound pressure over 
 % time. 
 
-% ALVA FIXING
-% Change time stepping method and change point sources to insertion
-
 % TO SAVE YOUR RESULTS
 %   - Create a folder one step outside acoustics-kand named Testdata
-%   %% not yet - Create subfolders there, named after the frequencies you are running
+%   - Your tests will be saved there (if true) in a subfolder called
+%     frequencyHz_key, where key is a random 4 digit nr
 
 % ====================================================
 
 function simulation_3D_fourth()
     
-    plot_time_steps = true;     % If true, plot time-steps
-    save_time_steps = false;
+    plot_time_steps = false;     % If true, plot time-steps
+    save_time_steps = true;    % If true, save time-steps
     
     % ====================================================
     % Model parameters
     
-    T = 5;           % Final time (seconds)
+    T = 0.5;           % Final time (seconds)
+    s = 2;           % plot every s time-steps
     
     % Define boundaries (m)
     x_l = 0;           % Left boundary of x
@@ -121,9 +120,21 @@ function simulation_3D_fourth()
     disp(['Simulation time: ', num2str(T), 's'])
     disp(['Number of steps: ', num2str(m_t)])
     
+    % Generate id for this test
     key = join(string(randi(9,4,1)));
     key = strrep(key,' ','');
     infostring = string(append(key, '__', num2str(f), 'Hz_', num2str(m), 'points_', num2str(m_t), 'steps_'));
+    disp(append('Test: ', num2str(f), 'Hz_', key));
+    
+    % Create folder for this test
+    location = append('../Testdata/', num2str(f), 'Hz_', num2str(key));
+    mkdir(location);
+    
+    % Saving all general data regarding this test
+    if save_time_steps
+        sim_name = append(location, '/INFO.mat');
+        save(sim_name, 'key', 'f', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring')
+    end
     
     % ====================================================
     % Plot and time step
@@ -151,8 +162,8 @@ function simulation_3D_fourth()
         %u = F2(t, u);
         
         if save_time_steps
-            p = reshape(u(1:m), m_y, m_x, m_z);
-            stepname = append('../Testdata/', infostring, num2str(time_step), '.mat');
+            p = reshape(u(1:m), m_x, m_y, m_z);
+            stepname = append(location, '/', num2str(key), '_', num2str(time_step), '.mat');
             save(stepname, 'p');
         end
         
@@ -162,7 +173,7 @@ function simulation_3D_fourth()
 %         end
         
         % Plot every *insert number* time steps
-        if plot_time_steps && mod(time_step,4) == 0
+        if plot_time_steps && mod(time_step, s) == 0
             % Plot middle layer
             %srf.ZData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
             srf.CData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
@@ -174,11 +185,6 @@ function simulation_3D_fourth()
         end
     end
     
-    if save_time_steps
-        % Saving all general data regarding this test
-        sim_name = append('../Testdata/INFO.mat');
-        save(sim_name, 'key', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring')
-    end
     
     % ====================================================
     % Define functions used in code 
