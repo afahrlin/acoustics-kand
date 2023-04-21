@@ -47,7 +47,7 @@ function simulation_1D_absorbing_BC_third()
     X_vec = linspace(x_l, x_r, m)';
 
     % Time discretization
-    h_t = 0.01*h_x/c;
+    h_t = 0.25*h_x/c;
     m_t = round(T/h_t,0);
     h_t = T/m_t;
 
@@ -105,7 +105,7 @@ function simulation_1D_absorbing_BC_third()
 
     function [v_new, v, t] = step(v, v_prev, dt, t)
         vh_new = dt^2*D*v + 2*v - v_prev;
-        v_new = vh_new + E*(vh_new-v_prev)/(2*dt);
+        v_new = vh_new + dt^2*E*(vh_new-v_prev)/(2*dt);
 
         t = t + dt;
     end
