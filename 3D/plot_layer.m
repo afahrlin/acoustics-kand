@@ -21,11 +21,18 @@ function plot_layer(simname, height)
     Y = Y_vec(:,:,round(m_z/2));
     
     s = 2;  % plot every s timesteps
-    % height = 0.55;   % percentage of full height
     Height = zeros(m_x*m_y, 1) + height;
     
+    dBel = false;
+    
     % Prepare plot
-    figure('Name', append('Sound pressure (layer) ', num2str(f), ' Hz'));
+    if dBel
+        yax = 'Sound pressure in dB (layer) ';
+    else
+        yax = 'Sound pressure (layer) ';
+    end
+    
+    figure('Name', append(yax, num2str(f), ' Hz'));
     srf = surf(X, Y, zeros(size(X)));
     z = [0 1];
     axis([0 L_x 0 L_y z]);
@@ -37,7 +44,11 @@ function plot_layer(simname, height)
     
     % Add colorbar
     cb = colorbar;
-    caxis([-0.5,0.5]);
+    if dBel
+        caxis([20,100]);
+    else
+        caxis([-0.8,0.8]);
+    end
     cb.Label.String = 'Sound Pressure';
     pause(1);
     
@@ -49,7 +60,12 @@ function plot_layer(simname, height)
         U = reshape(p, m_y*m_x*m_z, 1);
         U = transpose(reshape(U((round(height*m_z,0))*m_x*m_y+1:(round(height*m_z,0)+1)*m_x*m_y), m_x, m_y));
         
-        srf.CData = U;
+        if dBel
+            srf.CData = dB(U);
+        else
+            srf.CData = U;
+        end
+        
         title(['Time: ', num2str((time_step-1)*h_t, '%05.4f'), ' s']);
         drawnow;
     end
