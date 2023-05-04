@@ -23,7 +23,7 @@ function plot_layer(simname, height)
     s = 2;  % plot every s timesteps
     Height = zeros(m_x*m_y, 1) + height;
     
-    dBel = false;
+    dBel = true;
     
     % Prepare plot
     if dBel
@@ -33,7 +33,7 @@ function plot_layer(simname, height)
     end
     
     figure('Name', append(yax, num2str(f), ' Hz'));
-    srf = surf(X, Y, zeros(size(X)));
+    srf = surf(X, Y, zeros(size(X)) + 20*10^(-6));
     z = [0 1];
     axis([0 L_x 0 L_y z]);
     srf.ZData = transpose(reshape(Height, m_x, m_y));
