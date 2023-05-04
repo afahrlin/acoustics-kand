@@ -20,19 +20,19 @@ function plot_layer(simname, height)
     X = X_vec(:,:,round(m_z/2));
     Y = Y_vec(:,:,round(m_z/2));
     
-    s = 2;  % plot every s timesteps
+    s = 7;  % plot every s timesteps
     Height = zeros(m_x*m_y, 1) + height;
     
     dBel = true;
     
     % Prepare plot
     if dBel
-        yax = 'Sound pressure in dB (layer) ';
+        tit = 'Sound pressure in dB (layer) ';
     else
-        yax = 'Sound pressure (layer) ';
+        tit = 'Sound pressure (layer) ';
     end
     
-    figure('Name', append(yax, num2str(f), ' Hz'));
+    figure('Name', append(tit, num2str(f), ' Hz'));
     srf = surf(X, Y, zeros(size(X)) + 20*10^(-6));
     z = [0 1];
     axis([0 L_x 0 L_y z]);
@@ -45,7 +45,7 @@ function plot_layer(simname, height)
     % Add colorbar
     cb = colorbar;
     if dBel
-        caxis([20,100]);
+        caxis([20,60]);
     else
         caxis([-0.8,0.8]);
     end
@@ -53,19 +53,28 @@ function plot_layer(simname, height)
     pause(1);
     
     % Time step
-    for time_step = 1:s:m_t
+    for time = 1:s:m_t
+        step(time)
+    end
+    
+    % Ensure last time step is plotted
+    if mod(m_t-1, s) ~= 0
+        step(m_t)
+    end
+    
+    function step(time_step)
         step_file = append(location, key, '_', num2str(time_step), '.mat');
 
         load(step_file, 'p');
         U = reshape(p, m_y*m_x*m_z, 1);
         U = transpose(reshape(U((round(height*m_z,0))*m_x*m_y+1:(round(height*m_z,0)+1)*m_x*m_y), m_x, m_y));
-        
+
         if dBel
             srf.CData = dB(U);
         else
             srf.CData = U;
         end
-        
+
         title(['Time: ', num2str((time_step-1)*h_t, '%05.4f'), ' s']);
         drawnow;
     end
