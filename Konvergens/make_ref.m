@@ -1,7 +1,7 @@
 % Making reference
 
 function u = make_ref(f)
-    plot_time_steps = false;     % If true, plot time-steps
+
     save_time_steps = false;    % If true, save time-steps
     
     % ====================================================
@@ -37,13 +37,7 @@ function u = make_ref(f)
     % ====================================================
     % Initial condition parameters
     
-    % lambda = max([L_x L_y L_z]); % Longest wave resonant with the room
-    % k = 3;                      % Which overtone
-    % f = k*c/lambda;              % Frequency
-    % f = 100;
     w = 2*pi*f;               % Angular frequency (room resonance)
-    %w = 2*w/1.73;                 % Angular frequency (no resonance)
-    %w = w*1.125;
     amp = 4*pi*3;                   % Amplitude
     amp_ps = amp;
     
@@ -121,40 +115,16 @@ function u = make_ref(f)
     disp(append('Test: ', num2str(f), 'Hz_', key));
     
     % Create folder for this test
-    location = append('../Testdata/', num2str(f), 'Hz_', num2str(key));
-    
-    
-    % Saving all general data regarding this test
-    if save_time_steps
-        mkdir(location);
-        sim_name = append(location, '/INFO.mat');
-        save(sim_name, 'key', 'f', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring')
-    end
+    location = append('Testdata/', num2str(f), 'Hz_', num2str(key));
+    mkdir(location);
+    sim_info = append(location, '/INFO.mat');
+    save(sim_info, 'key', 'f', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring')
     
     % ====================================================
-    % Plot and time step
-    
-    % Initialize plot
-    if plot_time_steps 
-        figure('Name', 'Pressure time plot');
-        srf = surf(X_vec_plot, Y_vec_plot, reshape(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1), m_y, m_x));
-        z = [-1.5 1.5];
-        axis([x_l x_r y_l y_r z]);
-        pbaspect([L_x L_y min([L_x, L_y])]);
-        title('Time: 0 s');
-        zlabel('Sound Pressure');
-        
-        % Add colorbar
-        cb = colorbar;
-        caxis([-1.5, 1.5]);
-        cb.Label.String = 'Sound Pressure';
-        pause(1);
-    end 
     
     % Step through time with RK4
     for time_step = 1:m_t
         [u,t] = steprk4(u, t, h_t);
-        %u = F2(t, u);
         
         if save_time_steps
             p = reshape(u(1:m), m_x, m_y, m_z);
@@ -166,22 +136,9 @@ function u = make_ref(f)
         if mod(time_step, 100) == 0
             disp([num2str(time_step), '/', num2str(m_t)])
         end
-        
-        % Plot every *insert number* time steps
-        if plot_time_steps && mod(time_step, s) == 0
-            % Plot middle layer
-            % srf.ZData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
-            % srf.CData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
-            % Plot bottom layer
-            srf.ZData = transpose(reshape(u((round(1*m_z,0)-1)*m_x*m_y+1:(round(1*m_z,0))*m_x*m_y), m_x, m_y));
-            srf.CData = transpose(reshape(u((round(1*m_z,0)-1)*m_x*m_y+1:(round(1*m_z,0))*m_x*m_y), m_x, m_y));
-            title(['Time: ', num2str(time_step*h_t, '%05.4f'), ' s']);
-            drawnow;
-        end
     end
     
     u = reshape(u(1:m), m_x, m_y, m_z);
-    
     
     % ====================================================
     % Define functions used in code 
