@@ -11,34 +11,34 @@
 
 % ====================================================
 
-function simulation_3D_fourth(f)
+function simulation_3D_propagation_tests()
     
-    plot_time_steps = false;     % If true, plot time-steps
-    save_time_steps = true;    % If true, save time-steps
+    plot_time_steps = true;     % If true, plot time-steps
+    save_time_steps = false;    % If true, save time-steps
     
     % ====================================================
     % Model parameters
     
-    T = 0.3;           % Final time (seconds)
+    T = 0.01;           % Final time (seconds)
     s = 1;           % plot every s time-steps
     
     % Define boundaries (m)
     x_l = 0;           % Left boundary of x
-    x_r = 6.2;            % Right boundary of x
+    x_r = 2;            % Right boundary of x
     L_x = x_r-x_l;      % Length of x interval
     y_l = 0;           % Left boundary of y
-    y_r = 3.8;            % Right boundary of y
+    y_r = 2;            % Right boundary of y
     L_y = y_r-y_l;      % Length of y interval
     z_l = 0;           % Left boundary of z
-    z_r = 2.4;            % Right boundary of z
+    z_r = 2;            % Right boundary of z
     L_z = z_r-z_l;      % Length of z interval
 
     % Number of grid points
     % m_x = 185;
     % m_y = 113;
     % m_z = 71;
-    m_x = 107;
-    m_y = 65;
+    m_x = 51;
+    m_y = 41;
     m_z = 41;
     m = m_x*m_y*m_z;
 
@@ -52,15 +52,15 @@ function simulation_3D_fourth(f)
     % ====================================================
     % Initial condition parameters
     
-    % lambda = max([L_x L_y L_z]); % Longest wave resonant with the room
-    % k = 3;                      % Which overtone
-    % f = k*c/lambda;              % Frequency
-    % f = 100;
+    %lambda = max([L_x L_y L_z]); % Longest wave resonant with the room
+    %k = 2;                      % Which overtone
+    %f = k*c/lambda;              % Frequency
+    f = 100;
     w = 2*pi*f;               % Angular frequency (room resonance)
     %w = 2*w/1.73;                 % Angular frequency (no resonance)
     %w = w*1.125;
-    amp = 4*pi*3;                   % Amplitude
-    amp_ps = amp;
+    level = 0.2;
+    amp = 4*pi*20*level;                   % Amplitude
     
     % ====================================================
     % SBP-SAT approximation
@@ -71,7 +71,7 @@ function simulation_3D_fourth(f)
     h_y = L_y / (m_y - 1);
     y_vec = linspace(y_l, y_r, m_y);
     h_z = L_z / (m_z - 1);
-    z_vec = linspace(z_l, z_r, m_z);
+    z_vec = linspace(y_l, y_r, m_z);
     [X_vec, Y_vec, Z_vec] = meshgrid(x_vec, y_vec, z_vec);
 
     % Time discretization
@@ -152,17 +152,22 @@ function simulation_3D_fourth(f)
     % Initialize plot
     if plot_time_steps 
         figure('Name', 'Pressure time plot');
-        srf = surf(X_vec_plot, Y_vec_plot, reshape(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1), m_y, m_x));
-        z = [-1.5 1.5];
-        axis([x_l x_r y_l y_r z]);
-        pbaspect([L_x L_y min([L_x, L_y])]);
+        u_plot = reshape(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1), m_y, m_x);
+        disp(size(u_plot));
+        u_plot = u_plot(round(0.5*m_y),:);
+        disp(size(x_vec));
+        disp(size(u_plot));
+        plot(x_vec, u_plot);
+        z = [-1 1];
+        axis([x_l x_r z]);
+        %pbaspect([L_x L_y min([L_x, L_y])]);
         title('Time: 0 s');
-        zlabel('Sound Pressure');
+        ylabel('Sound Pressure');
         
         % Add colorbar
-        cb = colorbar;
-        caxis([-1.5, 1.5]);
-        cb.Label.String = 'Sound Pressure';
+        % cb = colorbar;
+        % caxis([-1.5, 1.5]);
+        % cb.Label.String = 'Sound Pressure';
         pause(1);
     end 
     
@@ -179,18 +184,19 @@ function simulation_3D_fourth(f)
         
         % Alert every 100th timestep
         if mod(time_step, 100) == 0
-            disp([num2str(time_step), '/', num2str(m_t)])
+            disp(time_step)
         end
         
         % Plot every *insert number* time steps
         if plot_time_steps && mod(time_step, s) == 0
-            % Plot middle layer
-            % srf.ZData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
-            % srf.CData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
-            % Plot bottom layer
-            srf.ZData = transpose(reshape(u((round(1*m_z,0)-1)*m_x*m_y+1:(round(1*m_z,0))*m_x*m_y), m_x, m_y));
-            srf.CData = transpose(reshape(u((round(1*m_z,0)-1)*m_x*m_y+1:(round(1*m_z,0))*m_x*m_y), m_x, m_y));
+            u_plot = reshape(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1), m_y, m_x);
+            u_plot = u_plot(round(0.5*m_y),:);
+            plot(x_vec, u_plot);
+            z = [-1 1];
+            axis([x_l x_r z]);
+            ylabel('Sound Pressure');
             title(['Time: ', num2str(time_step*h_t, '%05.4f'), ' s']);
+            pause(0.1)
             drawnow;
         end
     end
@@ -213,16 +219,7 @@ function simulation_3D_fourth(f)
     end 
 
     function v = F2(t, v)
-        if t < 0.05
-            amp_ps = amp*t/0.05;
-        end
-
-        % One point source in the middle
-        %v(round(m_x*m_y*m_z/2, 0)+m_x*m_y) = amp*sin(w*t);
-        
-        % Two point sources on boundary
-        v((round(m_x*m_y*m_z/2, 0)-m_x*round(0.25*m_y, 0))+round(0.5*m_x*m_y)) = amp_ps*sin(w*t);
-        v((round(m_x*m_y*m_z/2, 0)-m_x*round(0.75*m_y, 0))+round(0.5*m_x*m_y)) = amp_ps*sin(w*t);
+        v((round(m_x*m_y*m_z/2, 0)-m_x*round(0.5*m_y, 0))+round(0.5*m_x*m_y)) = amp*sin(w*t);
     end
 
     % Time step with rk4

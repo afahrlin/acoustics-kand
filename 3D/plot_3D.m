@@ -14,7 +14,7 @@ function plot_3D(simname)
     % Load general data
     location = append('../Testdata/', num2str(simname), '/');
     info = append(location, 'INFO.mat');
-    load(info, 'key', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'L_x', 'L_y', 'L_z');
+    load(info, 'key', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'L_x', 'L_y', 'L_z', 'f');
     disp('Load done');
     
     % Initialize video
@@ -26,13 +26,13 @@ function plot_3D(simname)
     n = 2;      % Plot every nth point in every direction
     m = 5;      % Plot every mth time step
     C = 1;      % Size of colored points in scatterplots
-    
-    % Reshape and select every nth index to visualize    
-    X = X_vec(1:n:end,1:n:end,1:n:end);
+
+    % Reshape and select every nth index to visualize
+    X = X_vec(1:n:end,1:n:end,1:n/2:end);
     X = reshape(X, numel(X), 1);
-    Y = Y_vec(1:n:end,1:n:end,1:n:end);
+    Y = Y_vec(1:n:end,1:n:end,1:n/2:end);
     Y = reshape(Y, numel(Y), 1);
-    Z = Z_vec(1:n:end,1:n:end,1:n:end);
+    Z = Z_vec(1:n:end,1:n:end,1:n/2:end);
     Z = reshape(Z, numel(Z), 1);
     
     U = zeros(numel(Z),1);
@@ -43,8 +43,8 @@ function plot_3D(simname)
     fig = gcf;
     fig.Position = [0, 0, 1000, 1000];
     t.Padding = 'compact';
-    title(t,'3D Visualization! Time: 0');
-    cax = [-0.2, 0.2];
+    title(t,append('Sound Pressure at Time: 0 s. Frequency: ', num2str(f), ' Hz.'));
+    cax = [-2, 2];
 
     % Plot as a scatter plot, Angle 1
     nexttile([3 3]);
@@ -53,6 +53,9 @@ function plot_3D(simname)
     xlabel('X')
     ylabel('Y')
     zlabel('Z')
+    xlim([0 L_x])
+    ylim([0 L_y])
+    zlim([0 L_z])
     caxis(cax);
     pbaspect([L_x L_y L_z]);
 
@@ -63,6 +66,9 @@ function plot_3D(simname)
     xlabel('X')
     ylabel('Y')
     zlabel('Z')
+    xlim([0 L_x])
+    ylim([0 L_y])
+    zlim([0 L_z])
     caxis(cax);
     pbaspect([L_x L_y L_z]);
 
@@ -73,6 +79,9 @@ function plot_3D(simname)
     xlabel('X')
     ylabel('Y')
     zlabel('Z')
+    xlim([0 L_x])
+    ylim([0 L_y])
+    zlim([0 L_z])
     caxis(cax);
     pbaspect([L_x L_y L_z]);
 
@@ -83,6 +92,9 @@ function plot_3D(simname)
     xlabel('X')
     ylabel('Y')
     zlabel('Z')
+    xlim([0 L_x])
+    ylim([0 L_y])
+    zlim([0 L_z])
     caxis(cax);
     pbaspect([L_x L_y L_z]);
     
@@ -97,14 +109,14 @@ function plot_3D(simname)
         load(step_file, 'p');
         U = permute(p, [2,1,3]);
         
-        U = U(1:n:end, 1:n:end, 1:n:end);
+        U = U(1:n:end, 1:n:end, 1:n/2:end);
         U = reshape(U, numel(U), 1);
 
         sc1.CData = U;
         sc2.CData = U;
         sc3.CData = U;
         sc4.CData = U;
-        title(t,append('Sound pressure at Time: ', num2str((time_step-1)*h_t), ' s'));
+        title(t,append('Sound Pressure at Time: ', num2str((time_step-1)*h_t), ' s. Frequency: ', num2str(f), ' Hz.'));
         drawnow;
         
         % Write the timestep as a frame to the video
