@@ -1,14 +1,11 @@
 % Making reference
 
-function [u, simname] = make_ref(f)
+function [u, simname] = make_ref(f, T)
 
     save_time_steps = false;    % If true, save time-steps
     
     % ====================================================
     % Model parameters
-    
-    T = 0.5;           % Final time (seconds)
-    s = 1;           % plot every s time-steps
     
     % Define boundaries (m)
     x_l = 0;           % Left boundary of x
@@ -22,9 +19,9 @@ function [u, simname] = make_ref(f)
     L_z = z_r-z_l;      % Length of z interval
 
     % Number of grid points
-    m_x = 107;
-    m_y = 65;
-    m_z = 41;
+    m_x = 833;
+    m_y = 513;
+    m_z = 321;
     m = m_x*m_y*m_z;
 
     % ====================================================
@@ -39,8 +36,8 @@ function [u, simname] = make_ref(f)
     
     vol = 80;
     Pvol = 20*10^(-6) * 10^(20/vol);
-    w = 2*pi*f;               % Angular frequency (room resonance)
-    amp = 4*pi*3*Pvol;                   % Amplitude
+    w = 2*pi*f;               % Angular frequency 
+    amp = 4*pi*3*Pvol;        % Amplitude
     amp_ps = amp;
     
     % ====================================================
@@ -99,8 +96,7 @@ function [u, simname] = make_ref(f)
     disp('A-Matrix Done')
     
     % Set initial values
-    [X_vec_plot, Y_vec_plot] = meshgrid(x_vec, y_vec);
-    u = zeros(2*m, 1);
+    u = zeros(2*m, 1) + 20*10^(-6);
     t = 0;
     
     % ====================================================
@@ -114,15 +110,16 @@ function [u, simname] = make_ref(f)
     key = join(string(randi(9,4,1)));
     key = strrep(key,' ','');
     infostring = string(append(key, '__', num2str(f), 'Hz_', num2str(m), 'points_', num2str(m_t), 'steps_'));
-    simname = append(num2str(f), 'Hz_', key);
+    simname = append(num2str(f), 'Hz_', num2str(m), 'points');
     disp(append('Test: ', simname));
     
     % Create folder for this test
     location = append('Testdata/', simname);
-    mkdir(location);
-    sim_info = append(location, '/INFO.m');
-    save(sim_info, 'key', 'f', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring', '-v7.3')
-    
+    mkdir(location)
+
+    sim_info = append(location, '/INFO.mat');
+    save(sim_info, 'simname', 'key', 'f', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring', '-v7.3')
+    disp('Parameters saved');
     % ====================================================
     
     % Step through time with RK4
