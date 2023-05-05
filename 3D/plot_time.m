@@ -7,7 +7,7 @@ function plot_time()
     C = 1;      % Size of colored points in scatterplots
 
     % Import data
-%     location = append('../Testdata/', num2str(simname), '/');
+%     location = append('Testdata/', num2str(simname), '/');
 %     info = append(location, 'INFO.mat');
 %     load(info, 'key', 'f', 'X_vec', 'Y_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'L_x', 'L_y', 'infostring');
 %     disp('Load done');
@@ -53,7 +53,7 @@ function plot_time()
     fig.Position = [0, 0, 1000, 1000];
     t.Padding = 'compact';
     %title(t,append('Sound Pressure at Time: 0 s. Frequency: ', num2str(f), ' Hz.'));
-    cax = [-2, 2];
+    cax = [0, 1];
 
     % Plot as a scatter plot, Angle 1
     nexttile([3 3]);
@@ -113,13 +113,13 @@ function plot_time()
     cb.Label.String = 'Sound Pressure';
     % pause(1);
 
-    load('/Users/alvafahrlin/Documents/VSCode/Kand/acoustics-kand/uref.mat', 'uref');
+    load('/Users/alvafahrlin/Documents/VSCode/Kand/acoustics-kand/Konvergens/uref.mat', 'uref');
     size(uref)
     U = permute(uref, [2,1,3]);
     size(U)
 
     U = U(1:n:end, 1:n:end, 1:n:end);
-    U = reshape(U, numel(U), 1);
+    U = log10(abs(reshape(U, numel(U), 1))/(20*10^(-6)));
     size(U)
 
     sc1.CData = U;

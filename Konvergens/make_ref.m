@@ -1,13 +1,13 @@
 % Making reference
 
-function u = make_ref(f)
+function [u, simname] = make_ref(f)
 
     save_time_steps = false;    % If true, save time-steps
     
     % ====================================================
     % Model parameters
     
-    T = 0.001;           % Final time (seconds)
+    T = 0.5;           % Final time (seconds)
     s = 1;           % plot every s time-steps
     
     % Define boundaries (m)
@@ -37,8 +37,10 @@ function u = make_ref(f)
     % ====================================================
     % Initial condition parameters
     
+    vol = 80;
+    Pvol = 20*10^(-6) * 10^(20/vol);
     w = 2*pi*f;               % Angular frequency (room resonance)
-    amp = 4*pi*3;                   % Amplitude
+    amp = 4*pi*3*Pvol;                   % Amplitude
     amp_ps = amp;
     
     % ====================================================
@@ -112,13 +114,14 @@ function u = make_ref(f)
     key = join(string(randi(9,4,1)));
     key = strrep(key,' ','');
     infostring = string(append(key, '__', num2str(f), 'Hz_', num2str(m), 'points_', num2str(m_t), 'steps_'));
-    disp(append('Test: ', num2str(f), 'Hz_', key));
+    simname = append(num2str(f), 'Hz_', key);
+    disp(append('Test: ', simname));
     
     % Create folder for this test
-    location = append('Testdata/', num2str(f), 'Hz_', num2str(key));
+    location = append('Testdata/', simname);
     mkdir(location);
-    sim_info = append(location, '/INFO.mat');
-    save(sim_info, 'key', 'f', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring')
+    sim_info = append(location, '/INFO.m');
+    save(sim_info, 'key', 'f', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring', '-v7.3')
     
     % ====================================================
     
@@ -145,7 +148,7 @@ function u = make_ref(f)
 
     % Define rhs of the semi-discrete approximation
     function u_t = rhs(u) 
-        u_t = A*u;  %- [sparse(m,1); F2(t)]; 
+        u_t = A*u;
     end
 
     function v = F(t)
