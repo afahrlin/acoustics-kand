@@ -12,11 +12,3 @@ function main()
     disp('Data saved');
     disp(simname);
 end
-
-% våglängd: lång?
-% generera referenslösning med 2^5 så många punkter 
-% (i alla riktningar) som lägsta stabila
-
-% ta lösning för varannan, var fjärde, var åttonde, var 16e och var 32a
-% punkt, dvs 
-
