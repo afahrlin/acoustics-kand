@@ -1,13 +1,12 @@
-% Making reference
+% Making convergence test data
 
-function [u, simname] = make_ref(f, T, dim)
+function [u, simname] = make_test(f, T, dim)
 
     save_time_steps = false;    % If true, save time-steps
     
     % ====================================================
     % Model parameters
     
-    % Define boundaries (m)
     x_l = 0;           % Left boundary of x
     x_r = 6.24;            % Right boundary of x
     L_x = x_r-x_l;      % Length of x interval
@@ -60,19 +59,19 @@ function [u, simname] = make_ref(f, T, dim)
     disp('Discretization Done')
 
     % Get D2 operator - x
-    [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_6th(m_x, h_x);
+    [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_4th(m_x, h_x);
     % SBP-SAT
     D_x = c^2*(D2_x + HI_x*e_lx'*d1_lx - HI_x*e_rx'*d1_rx);
     E_x = -c^2*beta_3/beta_2*HI_x*(e_lx'*e_lx + e_rx'*e_rx);
 
     % Get D2 operator - y
-    [~, HI_y, ~, D2_y, e_ly, e_ry, d1_ly, d1_ry] = sbp_cent_6th(m_y, h_y);
+    [~, HI_y, ~, D2_y, e_ly, e_ry, d1_ly, d1_ry] = sbp_cent_4th(m_y, h_y);
     % SBP-SAT
     D_y = c^2*(D2_y + HI_y*e_ly'*d1_ly - HI_y*e_ry'*d1_ry);
     E_y = -c^2*beta_3/beta_2*HI_y*(e_ly'*e_ly + e_ry'*e_ry);
     
     % Get D2 operator - z
-    [~, HI_z, ~, D2_z, e_lz, e_rz, d1_lz, d1_rz] = sbp_cent_6th(m_z, h_z);
+    [~, HI_z, ~, D2_z, e_lz, e_rz, d1_lz, d1_rz] = sbp_cent_4th(m_z, h_z);
     % SBP-SAT
     D_z = c^2*(D2_z + HI_z*e_lz'*d1_lz - HI_z*e_rz'*d1_rz);
     E_z = -c^2*beta_3/beta_2*HI_z*(e_lz'*e_lz + e_rz'*e_rz);

@@ -20,4 +20,3 @@ end
 % ta lösning för varannan, var fjärde, var åttonde, var 16e och var 32a
 % punkt, dvs 
 
-% 160 * 256 * 416
