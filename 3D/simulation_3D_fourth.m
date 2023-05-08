@@ -13,8 +13,8 @@
 
 function simulation_3D_fourth(f)
     
-    plot_time_steps = false;     % If true, plot time-steps
-    save_time_steps = true;    % If true, save time-steps
+    plot_time_steps = true;     % If true, plot time-steps
+    save_time_steps = false;    % If true, save time-steps
     
     % ====================================================
     % Model parameters
@@ -185,11 +185,11 @@ function simulation_3D_fourth(f)
         % Plot every *insert number* time steps
         if plot_time_steps && mod(time_step, s) == 0
             % Plot middle layer
-            % srf.ZData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
-            % srf.CData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
+            srf.ZData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
+            srf.CData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
             % Plot bottom layer
-            srf.ZData = transpose(reshape(u((round(1*m_z,0)-1)*m_x*m_y+1:(round(1*m_z,0))*m_x*m_y), m_x, m_y));
-            srf.CData = transpose(reshape(u((round(1*m_z,0)-1)*m_x*m_y+1:(round(1*m_z,0))*m_x*m_y), m_x, m_y));
+%             srf.ZData = transpose(reshape(u((round(1*m_z,0)-1)*m_x*m_y+1:(round(1*m_z,0))*m_x*m_y), m_x, m_y));
+%             srf.CData = transpose(reshape(u((round(1*m_z,0)-1)*m_x*m_y+1:(round(1*m_z,0))*m_x*m_y), m_x, m_y));
             title(['Time: ', num2str(time_step*h_t, '%05.4f'), ' s']);
             drawnow;
         end
@@ -213,9 +213,9 @@ function simulation_3D_fourth(f)
     end 
 
     function v = F2(t, v)
-        if t < 0.05
-            amp_ps = amp*t/0.05;
-        end
+%         if t < 0.05
+%             amp_ps = amp*t/0.05;
+%         end
 
         % One point source in the middle
         %v(round(m_x*m_y*m_z/2, 0)+m_x*m_y) = amp*sin(w*t);

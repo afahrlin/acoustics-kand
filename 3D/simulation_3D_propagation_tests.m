@@ -13,18 +13,19 @@
 
 function simulation_3D_propagation_tests()
     
-    plot_time_steps = true;     % If true, plot time-steps
+    plot_time_steps_1d = true;     % If true, plot time-steps
+    plot_time_steps_2d = false;
     save_time_steps = false;    % If true, save time-steps
     
     % ====================================================
     % Model parameters
     
-    T = 0.01;           % Final time (seconds)
+    T = 0.07;           % Final time (seconds)
     s = 1;           % plot every s time-steps
     
     % Define boundaries (m)
     x_l = 0;           % Left boundary of x
-    x_r = 2;            % Right boundary of x
+    x_r = 3;            % Right boundary of x
     L_x = x_r-x_l;      % Length of x interval
     y_l = 0;           % Left boundary of y
     y_r = 2;            % Right boundary of y
@@ -38,8 +39,8 @@ function simulation_3D_propagation_tests()
     % m_y = 113;
     % m_z = 71;
     m_x = 51;
-    m_y = 41;
-    m_z = 41;
+    m_y = 51;
+    m_z = 51;
     m = m_x*m_y*m_z;
 
     % ====================================================
@@ -47,7 +48,7 @@ function simulation_3D_propagation_tests()
 
     c = 343;              % Wave speed (m/s)
     beta_2 = c;
-    beta_3 = 0;            % Absorption
+    beta_3 = 1;            % Absorption
 
     % ====================================================
     % Initial condition parameters
@@ -59,8 +60,8 @@ function simulation_3D_propagation_tests()
     w = 2*pi*f;               % Angular frequency (room resonance)
     %w = 2*w/1.73;                 % Angular frequency (no resonance)
     %w = w*1.125;
-    level = 0.2;
-    amp = 4*pi*20*level;                   % Amplitude
+    amp = 4*pi*30;                   % Amplitude
+    amp_ps = amp;
     
     % ====================================================
     % SBP-SAT approximation
@@ -107,7 +108,7 @@ function simulation_3D_propagation_tests()
     E_xy = sparse(kron(speye(m_y), E_x) + kron(E_y, speye(m_x)));
     E = sparse(kron(speye(m_z), E_xy) + kron(E_z, speye(m_x*m_y)));
     disp('E-Operator Done')
-
+    
     % Construct matrix A: u_t = Au with u = [phi, phi_t]^T
     % [0, I;
     %  D, E]
@@ -120,6 +121,7 @@ function simulation_3D_propagation_tests()
     % Set initial values
     [X_vec_plot, Y_vec_plot] = meshgrid(x_vec, y_vec);
     u = zeros(2*m, 1);
+    %u((round(m_x*m_y*m_z/2, 0)-m_x*round(0.5*m_y, 0))+round(0.5*m_x*m_y)) = amp;
     t = 0;
     
     % ====================================================
@@ -138,6 +140,14 @@ function simulation_3D_propagation_tests()
     % Create folder for this test
     location = append('../Testdata/', num2str(f), 'Hz_', num2str(key));
     
+%     x_mesh = reshape(X_vec(round(0.5*m_z,0)*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_y, m_x);
+%     y_mesh = reshape(Y_vec(round(0.5*m_z,0)*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_y, m_x);
+%     %x_mesh = x_mesh(round(0.5*m_y),:);
+%     %y_mesh = y_mesh(round(0.5*m_y),:);
+%     x_mesh = x_mesh(:,round(0.5*m_x));
+%     y_mesh = y_mesh(:,round(0.5*m_x));
+%     disp(x_mesh)
+%     disp(y_mesh)
     
     % Saving all general data regarding this test
     if save_time_steps
@@ -148,19 +158,43 @@ function simulation_3D_propagation_tests()
     
     % ====================================================
     % Plot and time step
+    lower = (round(m_x*m_y*m_z/2, 0)-m_x*round(0.5*m_y, 0))+round(0.5*m_x*m_y);
+    upper = (round(m_x*m_y*m_z/2, 0)-m_x*round(0.5*m_y, 0))+round(0.5*m_x*m_y)+m_x-1;
+    propagation = amplitude(x_vec);
     
     % Initialize plot
-    if plot_time_steps 
+    if plot_time_steps_1d
         figure('Name', 'Pressure time plot');
-        u_plot = reshape(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1), m_y, m_x);
-        disp(size(u_plot));
-        u_plot = u_plot(round(0.5*m_y),:);
-        disp(size(x_vec));
-        disp(size(u_plot));
-        plot(x_vec, u_plot);
-        z = [-1 1];
+%         u_plot = reshape(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1), m_y, m_x);
+%         u_plot = u_plot(round(0.5*m_y),:);
+%         %u_plot = u_plot(:,round(0.5*m_x));
+%         plot(x_vec, u_plot);
+%         %plot(y_vec, u_plot);
+        u_plot = u(lower:upper);
+        plot(x_vec, u_plot, 'r');
+        hold on;
+        plot(x_vec, propagation, 'k');
+        plot(x_vec, -propagation, 'k');
+        xline(1);
+        hold off;
+        z = [-10 10];
         axis([x_l x_r z]);
         %pbaspect([L_x L_y min([L_x, L_y])]);
+
+%         % Create x and y over the slicing plane
+%         xq=linspace(0,2,100);
+%         yq=linspace(1,1,100);
+%         disp(xq);
+%         disp(yq);
+% 
+%         % Interpolate over the surface
+%         zq=interp2(X_vec_plot,Y_vec_plot,u_plot,xq,yq); 
+%         dq=sqrt((xq-0).^2 + (yq-15).^2);
+% 
+%         plot(dq,zq)
+% 
+%         axis([min(dq),max(dq),-1,1]) % to mantain a good perspective
+        
         title('Time: 0 s');
         ylabel('Sound Pressure');
         
@@ -168,6 +202,22 @@ function simulation_3D_propagation_tests()
         % cb = colorbar;
         % caxis([-1.5, 1.5]);
         % cb.Label.String = 'Sound Pressure';
+        pause(1);
+    end 
+    % Initialize plot
+    if plot_time_steps_2d
+        figure('Name', 'Pressure time plot');
+        srf = surf(X_vec_plot, Y_vec_plot, reshape(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1), m_y, m_x));
+        z = [-1 1];
+        axis([x_l x_r y_l y_r z]);
+        pbaspect([L_x L_y min([L_x, L_y])]);
+        title('Time: 0 s');
+        zlabel('Sound Pressure');
+        
+        % Add colorbar
+        cb = colorbar;
+        caxis([-1, 1]);
+        cb.Label.String = 'Sound Pressure';
         pause(1);
     end 
     
@@ -188,15 +238,35 @@ function simulation_3D_propagation_tests()
         end
         
         % Plot every *insert number* time steps
-        if plot_time_steps && mod(time_step, s) == 0
-            u_plot = reshape(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1), m_y, m_x);
-            u_plot = u_plot(round(0.5*m_y),:);
-            plot(x_vec, u_plot);
-            z = [-1 1];
+        if plot_time_steps_1d && mod(time_step, s) == 0
+%             u_plot = reshape(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1), m_y, m_x);
+%             u_plot = u_plot(round(0.5*m_y),:);
+%             %u_plot = u_plot(:,round(0.5*m_x));
+%             plot(x_vec, u_plot);
+%             %plot(y_vec, u_plot);
+            u_plot = u(lower:upper);
+            plot(x_vec, u_plot, 'r');
+            hold on
+            plot(x_vec, propagation, 'k');
+            plot(x_vec, -propagation, 'k');
+            xline(1);
+            hold off
+            z = [-10 10];
             axis([x_l x_r z]);
             ylabel('Sound Pressure');
             title(['Time: ', num2str(time_step*h_t, '%05.4f'), ' s']);
-            pause(0.1)
+            %pause(0.1)
+            drawnow;
+        end
+        % Plot every *insert number* time steps
+        if plot_time_steps_2d && mod(time_step, s) == 0
+            % Plot middle layer
+            srf.ZData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
+            srf.CData = transpose(reshape(u((round(0.5*m_z,0))*m_x*m_y+1:(round(0.5*m_z,0)+1)*m_x*m_y), m_x, m_y));
+            % Plot bottom layer
+%             srf.ZData = transpose(reshape(u((round(1*m_z,0)-1)*m_x*m_y+1:(round(1*m_z,0))*m_x*m_y), m_x, m_y));
+%             srf.CData = transpose(reshape(u((round(1*m_z,0)-1)*m_x*m_y+1:(round(1*m_z,0))*m_x*m_y), m_x, m_y));
+            title(['Time: ', num2str(time_step*h_t, '%05.4f'), ' s']);
             drawnow;
         end
     end
@@ -204,22 +274,21 @@ function simulation_3D_propagation_tests()
     
     % ====================================================
     % Define functions used in code 
+    
+    function a = amplitude(r)
+        a = 1./r;
+    end
 
     % Define rhs of the semi-discrete approximation
     function u_t = rhs(u) 
-        u_t = A*u;  %- [sparse(m,1); F2(t)]; 
+        u_t = A*u;  %- [sparse(m,1); F2(t)];
     end
 
-    function v = F(t)
-        g_lx = sparse(m_y, m_z);
-        g_lx(round(0.25*m_y,0), round(m_z*0.5, 0)) = -amp*cos(w*t);
-        g_lx(round(0.75*m_y,0), round(m_z*0.5, 0)) = -amp*cos(w*t);
-        G_lx = reshape(g_lx, 1, m_y*m_z);
-        v = reshape((c^2*HI_x*e_lx'*G_lx), m, 1);
-    end 
-
     function v = F2(t, v)
-        v((round(m_x*m_y*m_z/2, 0)-m_x*round(0.5*m_y, 0))+round(0.5*m_x*m_y)) = amp*sin(w*t);
+%         if t < 0.03
+%             amp_ps = amp*t/0.05;
+%         end
+        v((round(m_x*m_y*m_z/2, 0)-m_x*round(0.5*m_y, 0))+round(0.5*m_x*m_y)+1) = amp_ps*sin(w*t);
     end
 
     % Time step with rk4
@@ -232,6 +301,7 @@ function simulation_3D_propagation_tests()
         k3 = dt*rhs(v+0.5*k2);
         v = F2(t+3*dt/4, v);
         k4 = dt*rhs(v+k3);
+        %v = F2(t+dt, v);
 
         v = v + 1/6*(k1 + 2*k2 + 2*k3 + k4);
         t = t + dt;
