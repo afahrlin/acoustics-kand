@@ -1,6 +1,6 @@
 
 r_start = 0.1;
-r = r_start:0.01:7;
+r = r_start:0.01:5;
 amp = 4*pi;
 amps = zeros(length(r),1);
 
@@ -10,8 +10,10 @@ end
 
 plot(r, amps, 'k')
 xlabel('Distance r')
-ylabel('Energy, Sound Pressure')
-title('Amplitude of sound pressure as a function of distance from a point source')
+ylabel('Sound Pressure')
+xline(1, '--k');
+title('Sound Pressure As a Function of Distance')
+legend('Sound Pressure','Standard Distance of Reference')
 
 
 function a = amplitude(r, amp)

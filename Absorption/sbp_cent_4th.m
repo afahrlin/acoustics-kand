@@ -50,6 +50,7 @@ function [H, HI, D1, D2, e_l, e_r, d1_l, d1_r] = sbp_cent_4th(m, h)
     d1_r(end-3:end) = flip(-d_stenc);
     
     D2 = HI*(-M - e_l'*d1_l + e_r'*d1_r);
+    disp(D2);
 end
 
 

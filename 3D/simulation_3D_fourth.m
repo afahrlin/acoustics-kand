@@ -37,9 +37,12 @@ function simulation_3D_fourth(f)
     % m_x = 185;
     % m_y = 113;
     % m_z = 71;
-    m_x = 107;
-    m_y = 65;
-    m_z = 41;
+%     m_x = 107;
+%     m_y = 65;
+%     m_z = 41;
+    m_x = 53;
+    m_y = 33;
+    m_z = 21;
     m = m_x*m_y*m_z;
 
     % ====================================================
@@ -66,11 +69,11 @@ function simulation_3D_fourth(f)
     % SBP-SAT approximation
 
     % Spatial discretization
-    h_x = L_x / (m_x - 1);
+    h_x = L_x / m_x;
     x_vec = linspace(x_l, x_r, m_x);
-    h_y = L_y / (m_y - 1);
+    h_y = L_y / m_y;
     y_vec = linspace(y_l, y_r, m_y);
-    h_z = L_z / (m_z - 1);
+    h_z = L_z / m_z;
     z_vec = linspace(z_l, z_r, m_z);
     [X_vec, Y_vec, Z_vec] = meshgrid(x_vec, y_vec, z_vec);
 
@@ -82,19 +85,19 @@ function simulation_3D_fourth(f)
     disp('Discretization Done')
 
     % Get D2 operator - x
-    [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_6th(m_x, h_x);
+    [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_4th(m_x, h_x);
     % SBP-SAT
     D_x = c^2*(D2_x + HI_x*e_lx'*d1_lx - HI_x*e_rx'*d1_rx);
     E_x = -c^2*beta_3/beta_2*HI_x*(e_lx'*e_lx + e_rx'*e_rx);
 
     % Get D2 operator - y
-    [~, HI_y, ~, D2_y, e_ly, e_ry, d1_ly, d1_ry] = sbp_cent_6th(m_y, h_y);
+    [~, HI_y, ~, D2_y, e_ly, e_ry, d1_ly, d1_ry] = sbp_cent_4th(m_y, h_y);
     % SBP-SAT
     D_y = c^2*(D2_y + HI_y*e_ly'*d1_ly - HI_y*e_ry'*d1_ry);
     E_y = -c^2*beta_3/beta_2*HI_y*(e_ly'*e_ly + e_ry'*e_ry);
     
     % Get D2 operator - z
-    [~, HI_z, ~, D2_z, e_lz, e_rz, d1_lz, d1_rz] = sbp_cent_6th(m_z, h_z);
+    [~, HI_z, ~, D2_z, e_lz, e_rz, d1_lz, d1_rz] = sbp_cent_4th(m_z, h_z);
     % SBP-SAT
     D_z = c^2*(D2_z + HI_z*e_lz'*d1_lz - HI_z*e_rz'*d1_rz);
     E_z = -c^2*beta_3/beta_2*HI_z*(e_lz'*e_lz + e_rz'*e_rz);
@@ -213,9 +216,9 @@ function simulation_3D_fourth(f)
     end 
 
     function v = F2(t, v)
-%         if t < 0.05
-%             amp_ps = amp*t/0.05;
-%         end
+        if t < 0.05
+            amp_ps = amp*t/0.05;
+        end
 
         % One point source in the middle
         %v(round(m_x*m_y*m_z/2, 0)+m_x*m_y) = amp*sin(w*t);

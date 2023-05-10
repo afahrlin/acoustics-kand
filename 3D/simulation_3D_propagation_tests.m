@@ -20,7 +20,7 @@ function simulation_3D_propagation_tests()
     % ====================================================
     % Model parameters
     
-    T = 0.07;           % Final time (seconds)
+    T = 0.1;           % Final time (seconds)
     s = 1;           % plot every s time-steps
     
     % Define boundaries (m)
@@ -31,6 +31,7 @@ function simulation_3D_propagation_tests()
     y_r = 2;            % Right boundary of y
     L_y = y_r-y_l;      % Length of y interval
     z_l = 0;           % Left boundary of z
+    %z_r = 4;
     z_r = 2;            % Right boundary of z
     L_z = z_r-z_l;      % Length of z interval
 
@@ -49,6 +50,7 @@ function simulation_3D_propagation_tests()
     c = 343;              % Wave speed (m/s)
     beta_2 = c;
     beta_3 = 1;            % Absorption
+    beta_3_ps = 1;
 
     % ====================================================
     % Initial condition parameters
@@ -56,46 +58,53 @@ function simulation_3D_propagation_tests()
     %lambda = max([L_x L_y L_z]); % Longest wave resonant with the room
     %k = 2;                      % Which overtone
     %f = k*c/lambda;              % Frequency
-    f = 100;
+    f = 300;
     w = 2*pi*f;               % Angular frequency (room resonance)
     %w = 2*w/1.73;                 % Angular frequency (no resonance)
     %w = w*1.125;
-    amp = 4*pi*30;                   % Amplitude
-    amp_ps = amp;
     
     % ====================================================
     % SBP-SAT approximation
 
     % Spatial discretization
-    h_x = L_x / (m_x - 1);
+    h_x = L_x / m_x;
     x_vec = linspace(x_l, x_r, m_x);
-    h_y = L_y / (m_y - 1);
+    h_y = L_y / m_y;
     y_vec = linspace(y_l, y_r, m_y);
-    h_z = L_z / (m_z - 1);
+    h_z = L_z / m_z;
     z_vec = linspace(y_l, y_r, m_z);
     [X_vec, Y_vec, Z_vec] = meshgrid(x_vec, y_vec, z_vec);
-
+    
     % Time discretization
     h_t = 0.25*max([h_x, h_y, h_z])/c;
     m_t = round(T/h_t,0);
     h_t = T/m_t;
+    
+    % Amplitude of point sources
+    %amp = 4*pi*34;                   % Amplitude
+    %amp = 4*pi*15;
+    %amp = 1/(50*h_x*h_y*h_z);     % Amplitude right at f=200, m=51, h_t=0.25
+    %amp = 2/(3*h_x*h_z);            % Löjligt bra at f=200, m=51, h_t=0.25
+    %amp = 1/(100000*h_x*h_z*h_t);  % bra at f=200, m=31,51,71, h_t=0.1
+    amp = 3/(4*pi*h_y*h_z);
+    amp_ps = amp;
 
     disp('Discretization Done')
 
     % Get D2 operator - x
-    [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_6th(m_x, h_x);
+    [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_4th(m_x, h_x);
     % SBP-SAT
     D_x = c^2*(D2_x + HI_x*e_lx'*d1_lx - HI_x*e_rx'*d1_rx);
-    E_x = -c^2*beta_3/beta_2*HI_x*(e_lx'*e_lx + e_rx'*e_rx);
+    E_x = -c^2/beta_2*HI_x*(beta_3_ps*e_lx'*e_lx + beta_3*e_rx'*e_rx);
 
     % Get D2 operator - y
-    [~, HI_y, ~, D2_y, e_ly, e_ry, d1_ly, d1_ry] = sbp_cent_6th(m_y, h_y);
+    [~, HI_y, ~, D2_y, e_ly, e_ry, d1_ly, d1_ry] = sbp_cent_4th(m_y, h_y);
     % SBP-SAT
     D_y = c^2*(D2_y + HI_y*e_ly'*d1_ly - HI_y*e_ry'*d1_ry);
     E_y = -c^2*beta_3/beta_2*HI_y*(e_ly'*e_ly + e_ry'*e_ry);
     
     % Get D2 operator - z
-    [~, HI_z, ~, D2_z, e_lz, e_rz, d1_lz, d1_rz] = sbp_cent_6th(m_z, h_z);
+    [~, HI_z, ~, D2_z, e_lz, e_rz, d1_lz, d1_rz] = sbp_cent_4th(m_z, h_z);
     % SBP-SAT
     D_z = c^2*(D2_z + HI_z*e_lz'*d1_lz - HI_z*e_rz'*d1_rz);
     E_z = -c^2*beta_3/beta_2*HI_z*(e_lz'*e_lz + e_rz'*e_rz);
@@ -117,6 +126,11 @@ function simulation_3D_propagation_tests()
     A(m+1:end, 1:m) = D;
     A(m+1:end, m+1:end) = E;
     disp('A-Matrix Done')
+%     e = eig(full(E));
+%     real_e = min(real(e));
+%     imag_e = min(abs(imag(e)));
+%     disp('Eigenvalues found');
+%     plot(real_e, imag_e, 'ko');
     
     % Set initial values
     [X_vec_plot, Y_vec_plot] = meshgrid(x_vec, y_vec);
@@ -280,30 +294,36 @@ function simulation_3D_propagation_tests()
     end
 
     % Define rhs of the semi-discrete approximation
-    function u_t = rhs(u) 
-        u_t = A*u;  %- [sparse(m,1); F2(t)];
+    function u_t = rhs(t, u) 
+        u_t = A*F2(t, u);
     end
 
     function v = F2(t, v)
-%         if t < 0.03
-%             amp_ps = amp*t/0.05;
-%         end
-        v((round(m_x*m_y*m_z/2, 0)-m_x*round(0.5*m_y, 0))+round(0.5*m_x*m_y)+1) = amp_ps*sin(w*t);
+        if t < 0.01
+            amp_ps = amp*t/0.01;
+        end
+        v((round(m_x*m_y*m_z/2, 0)-m_x*round(0.5*m_y, 0))+round(0.5*m_x*m_y)) = amp_ps*sin(w*t);
     end
 
     % Time step with rk4
     function [v, t] = steprk4(v, t, dt)
-        v = F2(t, v);
-        k1 = dt*rhs(v);
-        v = F2(t+dt/4, v);
-        k2 = dt*rhs(v+0.5*k1);
-        v = F2(t+dt/2, v);
-        k3 = dt*rhs(v+0.5*k2);
-        v = F2(t+3*dt/4, v);
-        k4 = dt*rhs(v+k3);
-        %v = F2(t+dt, v);
+%         v = F2(t, v);
+        k1 = dt*rhs(t, v);
+%         v = F2(t+dt/4, v);
+        k2 = dt*rhs(t+0.5*dt, v+0.5*k1);
+%         v = F2(t+dt/2, v);
+        k3 = dt*rhs(t+0.5*dt, v+0.5*k2);
+%         v = F2(t+3*dt/4, v);
+        k4 = dt*rhs(t+dt, v+k3);
+%         v = F2(t+dt, v);
+
+%         k1 = dt*rhs(F2(t, v));
+%         k2 = dt*rhs(F2(t+0.5*dt, v+0.5*k1));
+%         k3 = dt*rhs(F2(t+0.5*dt, v+0.5*k2));
+%         k4 = dt*rhs(F2(t
 
         v = v + 1/6*(k1 + 2*k2 + 2*k3 + k4);
         t = t + dt;
+        v = F2(t, v);
     end
 end
