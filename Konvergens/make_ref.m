@@ -148,14 +148,6 @@ function [u, simname] = make_ref(f, T, dim)
         u_t = A*u;
     end
 
-    function v = F(t)
-        g_lx = sparse(m_y, m_z);
-        g_lx(round(0.25*m_y,0), round(m_z*0.5, 0)) = -amp*cos(w*t);
-        g_lx(round(0.75*m_y,0), round(m_z*0.5, 0)) = -amp*cos(w*t);
-        G_lx = reshape(g_lx, 1, m_y*m_z);
-        v = reshape((c^2*HI_x*e_lx'*G_lx), m, 1);
-    end 
-
     function v = F2(t, v)
         if t < 0.05
             amp_ps = amp*t/0.05;

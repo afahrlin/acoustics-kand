@@ -28,7 +28,7 @@ function [u, simname] = make_test(f, T, dim)
 
     c = 343;              % Wave speed (m/s)
     beta_2 = c;
-    beta_3 = 0;            % Absorption
+    beta_3 = 0.15;            % Absorption
 
     % ====================================================
     % Initial condition parameters

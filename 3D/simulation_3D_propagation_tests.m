@@ -19,7 +19,6 @@ function simulation_3D_propagation_tests()
     
     % ====================================================
     % Model parameters
-    
     T = 0.1;           % Final time (seconds)
     s = 1;           % plot every s time-steps
     
@@ -31,8 +30,8 @@ function simulation_3D_propagation_tests()
     y_r = 2;            % Right boundary of y
     L_y = y_r-y_l;      % Length of y interval
     z_l = 0;           % Left boundary of z
-    %z_r = 4;
-    z_r = 2;            % Right boundary of z
+    z_r = 2;
+    %z_r = 2;            % Right boundary of z
     L_z = z_r-z_l;      % Length of z interval
 
     % Number of grid points
@@ -76,7 +75,7 @@ function simulation_3D_propagation_tests()
     [X_vec, Y_vec, Z_vec] = meshgrid(x_vec, y_vec, z_vec);
     
     % Time discretization
-    h_t = 0.25*max([h_x, h_y, h_z])/c;
+    h_t = 0.15*max([h_x, h_y, h_z])/c;
     m_t = round(T/h_t,0);
     h_t = T/m_t;
     
@@ -116,6 +115,16 @@ function simulation_3D_propagation_tests()
     
     E_xy = sparse(kron(speye(m_y), E_x) + kron(E_y, speye(m_x)));
     E = sparse(kron(speye(m_z), E_xy) + kron(E_z, speye(m_x*m_y)));
+    
+%     element = sparse(m_y, m_y);
+%     element(round(m_y/2), round(m_y/2)) = 1;
+%     E_test = sparse(kron(element, E_x));
+%     element = sparse(m_z, m_z);
+%     element(round(m_z/2), round(m_z/2)) = 1;
+%     E_test = sparse(kron(element, E_test));
+%     
+%     E = E - E_test;
+    
     disp('E-Operator Done')
     
     % Construct matrix A: u_t = Au with u = [phi, phi_t]^T
@@ -176,7 +185,7 @@ function simulation_3D_propagation_tests()
     upper = (round(m_x*m_y*m_z/2, 0)-m_x*round(0.5*m_y, 0))+round(0.5*m_x*m_y)+m_x-1;
     propagation = amplitude(x_vec);
     
-    % Initialize plot
+    % Initialize plots
     if plot_time_steps_1d
         figure('Name', 'Pressure time plot');
 %         u_plot = reshape(u(round(0.5*m_z,0)*m_x*m_y:(round(0.5*m_z,0)+1)*m_x*m_y-1), m_y, m_x);
