@@ -14,7 +14,7 @@
 % =========================================================================
 
 function simulation_3D_final()
-    plot_time_steps_1d = true;     % If true, plot time steps 1d
+    plot_time_steps_1d = false;     % If true, plot time steps 1d
     plot_time_steps_2d = false;     % If true, plot time steps 2d
     save_time_steps = false;        % If true, save time steps
     
@@ -23,6 +23,11 @@ function simulation_3D_final()
     
     T = 0.1;            % Final time (seconds)
     s = 1;              % plot every s time-steps
+    
+    f = 200;                % UPPMAX
+    w = 2*pi*f;             % UPPMAX
+    T = 1/343+pi/(2*w);     % UPPMAX
+    
     
     % Define boundaries (m)
     x_l = 0;            % Left boundary of x
@@ -39,12 +44,12 @@ function simulation_3D_final()
 %     m_x = 185;      % High-res grid
 %     m_y = 113;
 %     m_z = 71;
-    m_x = 81;      % Low-res grid
+    m_x = 81;       % Low-res grid
     m_y = 49;
     m_z = 31;
-    %m_x = 31;
-    %m_y = 71;
-    %m_z = 71;
+%     m_x = 833;       % UPPMAX test 1
+%     m_y = 513;
+%     m_z = 321;
     m = m_x*m_y*m_z;
     
     % =====================================================================
@@ -63,16 +68,16 @@ function simulation_3D_final()
     % Discretization
     
     % Spatial discretization
-    h_x = L_x / m_x;
+    h_x = L_x / (m_x-1);
     x_vec = linspace(x_l, x_r, m_x);
-    h_y = L_y / m_y;
+    h_y = L_y / (m_y-1);
     y_vec = linspace(y_l, y_r, m_y);
-    h_z = L_z / m_z;
-    z_vec = linspace(y_l, y_r, m_z);
+    h_z = L_z / (m_z-1);
+    z_vec = linspace(z_l, z_r, m_z);
     [X_vec, Y_vec, Z_vec] = meshgrid(x_vec, y_vec, z_vec);
     
     % Time discretization
-    h_t = 0.2*max([h_x, h_y, h_z])/c;
+    h_t = 0.1*max([h_x, h_y, h_z])/c;
     m_t = round(T/h_t,0);
     h_t = T/m_t;
     
@@ -84,14 +89,14 @@ function simulation_3D_final()
 %     lambda = max([L_x L_y L_z]);    % Longest wave resonant with the room
 %     k = 3;                          % Which overtone
 %     f = k*c/lambda;                 % Frequency
-    f = 200;        % Frequency
-    w = 2*pi*f;     % Angular frequency
+    %f = 200;        % Frequency
+    %w = 2*pi*f;     % Angular frequency
     
     % Point source amplitude
     vol = 80;                           % Speaker volume
     Pvol = 20*10^(-6) * 10^(vol/20);    % Pressure 1m from speaker
-    amp = Pvol*5/(4*pi*h_y*h_z);        % Amplitude of point source
-    %amp = Pvol*0.00066/(4*pi*h_y^2*h_z^2*h_x);
+    Pvol = 1;   % UPPMAX test 1
+    amp = Pvol/(h_y*h_z);        % Amplitude of point source
     amp_ps = amp;                       % Constant amp of point source
     
     % Plot amplitude
@@ -125,8 +130,6 @@ function simulation_3D_final()
     
     E_xy = sparse(kron(speye(m_y), E_x) + kron(E_y, speye(m_x)));
     E = sparse(kron(speye(m_z), E_xy) + kron(E_z, speye(m_x*m_y)));
-    
-    
     
     disp('E-Operator Done')
     
@@ -279,6 +282,24 @@ function simulation_3D_final()
         end
     end
     
+    disp(u((round(m*0.5, 0)-m_x*round(0.5*m_y, 0))+...
+            round(0.5*m_x*m_y)+round(1/L_x*m_x)));
+        
+%     x_test = permute(X_vec, [2, 1, 3]);
+%     x_test = reshape(x_test, m, 1);
+%     disp(x_test((round(m_x*m_y*m_z/2, 0)-m_x*round(0.5*m_y, 0))+...
+%             round(0.5*m_x*m_y)));
+%     
+%     y_test = permute(Y_vec, [2, 1, 3]);
+%     y_test = reshape(y_test, m, 1);
+%     disp(y_test((round(m_x*m_y*m_z/2, 0)-m_x*round(0.5*m_y, 0))+...
+%             round(0.5*m_x*m_y)));
+%     
+%     z_test = permute(Z_vec, [2, 1, 3]);
+%     z_test = reshape(z_test, m, 1);
+%     disp(z_test((round(m_x*m_y*m_z/2, 0)-m_x*round(0.5*m_y, 0))+...
+%             round(0.5*m_x*m_y)));
+    
     % =====================================================================
     % Define functions used in code 
     
@@ -290,14 +311,14 @@ function simulation_3D_final()
     % Update value of point sources
     function v = F2(t, v)
         % For a 'smooth' start
-        if t < 0.01
-            amp_ps = amp*t/0.01;
-        else
-            amp_ps = amp;
-        end
+%         if t < 0.01
+%             amp_ps = amp*t/0.01;
+%         else
+%             amp_ps = amp;
+%         end
         
         % One point source in middle of left x-boundary
-        v((round(m_x*m_y*m_z/2, 0)-m_x*round(0.5*m_y, 0))+...
+        v(round(m_x*m_y*m_z/2, 0)-m_x*round(0.5*m_y, 0)+...
             round(0.5*m_x*m_y)) = amp_ps*sin(w*t);
         
         % Two point sources on left x-boundary

@@ -66,12 +66,12 @@ function simulation_3D_propagation_tests()
     % SBP-SAT approximation
 
     % Spatial discretization
-    h_x = L_x / m_x;
+    h_x = L_x / (m_x-1);
     x_vec = linspace(x_l, x_r, m_x);
-    h_y = L_y / m_y;
+    h_y = L_y / (m_y-1);
     y_vec = linspace(y_l, y_r, m_y);
-    h_z = L_z / m_z;
-    z_vec = linspace(y_l, y_r, m_z);
+    h_z = L_z / (m_z-1);
+    z_vec = linspace(z_l, z_r, m_z);
     [X_vec, Y_vec, Z_vec] = meshgrid(x_vec, y_vec, z_vec);
     
     % Time discretization
