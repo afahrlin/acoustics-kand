@@ -13,7 +13,7 @@
 % 
 % =========================================================================
 
-function simulation_3D_final()
+function Copy_of_simulation_3D_final()
     plot_time_steps_1d = false;     % If true, plot time steps 1d
     plot_time_steps_2d = false;     % If true, plot time steps 2d
     save_time_steps = false;        % If true, save time steps
@@ -21,12 +21,12 @@ function simulation_3D_final()
     % =====================================================================
     % Model parameters
     
-    T = 0.1;            % Final time (seconds)
+    T = 0;            % Final time (seconds)
     s = 1;              % plot every s time-steps
     
     f = 200;                % UPPMAX
     w = 2*pi*f;             % UPPMAX
-    T = 1/343+pi/(2*w);     % UPPMAX
+    %T = 1/343+pi/(2*w);     % UPPMAX
     
     
     % Define boundaries (m)
@@ -41,12 +41,12 @@ function simulation_3D_final()
     L_z = z_r-z_l;      % Length of z interval
     
     % Number of grid points
-    m_x = 185;      % High-res grid
-    m_y = 113;
-    m_z = 71;
-%     m_x = 81;       % Low-res grid
-%     m_y = 49;
-%     m_z = 31;
+%     m_x = 185;      % High-res grid
+%     m_y = 113;
+%     m_z = 71;
+    m_x = 400;       % Low-res grid
+    m_y = 400;
+    m_z = 400;
 %     m_x = 833;       % UPPMAX test 1
 %     m_y = 513;
 %     m_z = 321;
@@ -59,7 +59,7 @@ function simulation_3D_final()
     beta_2 = c;
     
     % Determine beta_3 based on reflection coefficient
-    R = 0;              % Reflection rate, must be between 0 and 1
+    R = 0.5;              % Reflection rate, must be between 0 and 1
     p = [-0.454, 1.34, -1.883, 0.997-R];
     r = roots(p);
     beta_3 = r(3); 
@@ -133,10 +133,21 @@ function simulation_3D_final()
     
     disp('E-Operator Done')
     
-    % Construct matrix A: v_t = Av with v = [p, p_t]^T
-    % [0, I;
-    %  D, E]
+%     tic
+%     % Construct matrix A: v_t = Av with v = [p, p_t]^T
+%     % [0, I;
+%     %  D, E]
+%     A = sparse(2*m,2*m);
+%     A(1:m, m+1:end) = speye(m);
+%     A(m+1:end, 1:m) = D;
+%     A(m+1:end, m+1:end) = E;
+%     issparse(A)
+%     toc
+    
+    tic 
     A = [sparse(m,m), speye(m); D, E];
+    issparse(A)
+    toc
     disp('A-Matrix Done')
     
     % Plot eigenvalues
