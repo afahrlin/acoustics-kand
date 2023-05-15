@@ -7,15 +7,15 @@
 % ========================================
 
 function [H, HI, D1, D2, e_l, e_r, d1_l, d1_r] = sbp_cent_6th(m, h)
-    e_l = zeros(1, m);
+    e_l = sparse(1, m);
     e_l(1) = 1;
 
-    e_r = zeros(1, m);
+    e_r = sparse(1, m);
     e_r(end) = 1;
 
     v = [13649/43200,12013/8640,2711/4320,5359/4320,7877/8640, 43801/43200];
 
-    H = eye(m);
+    H = speye(m);
     H(1:6, 1:6) = (diag(v));
     H(end-5:end, end-5:end) = (diag(flip(v)));
     H = H*h;
@@ -47,9 +47,9 @@ function [H, HI, D1, D2, e_l, e_r, d1_l, d1_r] = sbp_cent_6th(m, h)
     D2 = D2/(h^2);
 
     d_stenc = [-25/12, 4, -3, 4/3, -1/4]/h;
-    d1_l = zeros(1, m);
+    d1_l = sparse(1, m);
     d1_l(1:5) = d_stenc;
-    d1_r = zeros(1, m);
+    d1_r = sparse(1, m);
     d1_r(end-4:end) = flip(-d_stenc);
 end
 
