@@ -6,7 +6,7 @@ all_points = sortrows(cell2mat(struct2cell(load('points.mat'))));
 f = 200;
 T = 0.001;
 olle = 1;
-mkdir('Testdata');
+% mkdir('Testdata');
 
 for i = 3:length(all_points)
     dim = all_points(i,:);

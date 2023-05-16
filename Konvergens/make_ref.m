@@ -109,7 +109,8 @@ function [u, simname, alva] = make_ref(f, T, dim, olle)
     % [0, I;
     %  D, E]
     A = [sparse(m,m), speye(m); D, E];
-    disp('A-Matrix Done')
+    clear D E
+    disp('A-Matrix Done') 
     
     % Set initial values
     u = zeros(2*m, 1);  % Initial pressure deviation
