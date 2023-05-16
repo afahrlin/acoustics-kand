@@ -3,7 +3,7 @@
 function [u, simname, alva] = make_ref(f, T, dim, olle)
 
     save_time_steps = false;    % If true, save time-steps
-    
+    tic
     % ====================================================
     % Model parameters
     
@@ -53,6 +53,7 @@ function [u, simname, alva] = make_ref(f, T, dim, olle)
     h_t = 0.1*max([h_x, h_y, h_z])/c;
     m_t = round(T/h_t,0);
     h_t = T/m_t;
+    m_t = 1; %%%!!!!
 
     disp('Discretization Done')
     
@@ -107,10 +108,7 @@ function [u, simname, alva] = make_ref(f, T, dim, olle)
     % Construct matrix A: u_t = Au with u = [phi, phi_t]^T
     % [0, I;
     %  D, E]
-    A = sparse(2*m,2*m);
-    A(1:m, m+1:end) = speye(m);
-    A(m+1:end, 1:m) = D;
-    A(m+1:end, m+1:end) = E;
+    A = [sparse(m,m), speye(m); D, E];
     disp('A-Matrix Done')
     
     % Set initial values
@@ -125,9 +123,7 @@ function [u, simname, alva] = make_ref(f, T, dim, olle)
     disp(['Number of steps: ', num2str(m_t)])
     
     % Generate id for this test
-    key = join(string(randi(9,4,1)));
-    key = strrep(key,' ','');
-    infostring = string(append(key, '__', num2str(f), 'Hz_', num2str(m), 'points_', num2str(m_t), 'steps_'));
+    infostring = string(append(num2str(f), 'Hz_', num2str(m), 'points_', num2str(m_t), 'steps_'));
     simname = append(num2str(f), 'Hz_', num2str(m), 'points');
     disp(append('Test: ', simname));
     
@@ -137,7 +133,7 @@ function [u, simname, alva] = make_ref(f, T, dim, olle)
     location = append('Testdata');
 
     sim_info = append(location, '/INFO.mat');
-    save(sim_info, 'simname', 'key', 'f', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring', '-v7.3')
+    save(sim_info, 'simname', 'T', 'f', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring', '-v7.3')
     disp('Parameters saved');
     % ====================================================
     
@@ -159,6 +155,7 @@ function [u, simname, alva] = make_ref(f, T, dim, olle)
     
     alva = u(round(m*0.5) - m_x*round(0.5*m_y) + m_y*round(0.5*m_x) + round(m_x/L_x));
     u = reshape(u(1:m), m_x, m_y, m_z);
+    toc
     
     % ====================================================
     % Define functions used in code 
