@@ -78,11 +78,15 @@ function [u, simname] = make_test(f, T, dim)
     
     % SBP operators
     D_xy = sparse(kron(speye(m_y), D_x) + kron(D_y, speye(m_x)));
+    clear D_x D_y
     D = sparse(kron(speye(m_z), D_xy) + kron(D_z, speye(m_x*m_y)));
+    clear D_z
     disp('D-Operator Done')
     
     E_xy = sparse(kron(speye(m_y), E_x) + kron(E_y, speye(m_x)));
+    clear E_x E_y
     E = sparse(kron(speye(m_z), E_xy) + kron(E_z, speye(m_x*m_y)));
+    clear E_z
     disp('E-Operator Done')
 
     % Construct matrix A: u_t = Au with u = [phi, phi_t]^T

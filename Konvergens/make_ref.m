@@ -23,7 +23,7 @@ function [u, simname, alva] = make_ref(f, T, dim, olle)
     m_y = dim(2);
     m_z = dim(3);
     m = m_x*m_y*m_z;
-    disp(m);
+    disp(append('m: ', num2str(m)));
 
     % ====================================================
     % PDE parameters
@@ -53,7 +53,6 @@ function [u, simname, alva] = make_ref(f, T, dim, olle)
     h_t = 0.1*max([h_x, h_y, h_z])/c;
     m_t = round(T/h_t,0);
     h_t = T/m_t;
-    m_t = 1; %%%!!!!
 
     disp('Discretization Done')
     
@@ -76,21 +75,18 @@ function [u, simname, alva] = make_ref(f, T, dim, olle)
     D_x = c^2*(D2_x + HI_x*e_lx'*d1_lx - HI_x*e_rx'*d1_rx);
     E_x = -c^2*beta_3/beta_2*HI_x*(e_lx'*e_lx + e_rx'*e_rx);
 
-    disp('y')
     % Get D2 operator - y
     [~, HI_y, ~, D2_y, e_ly, e_ry, d1_ly, d1_ry] = sbp_cent_6th(m_y, h_y);
     % SBP-SAT
     D_y = c^2*(D2_y + HI_y*e_ly'*d1_ly - HI_y*e_ry'*d1_ry);
     E_y = -c^2*beta_3/beta_2*HI_y*(e_ly'*e_ly + e_ry'*e_ry);
     
-    disp('z')
     % Get D2 operator - z
     [~, HI_z, ~, D2_z, e_lz, e_rz, d1_lz, d1_rz] = sbp_cent_6th(m_z, h_z);
     % SBP-SAT
     D_z = c^2*(D2_z + HI_z*e_lz'*d1_lz - HI_z*e_rz'*d1_rz);
     E_z = -c^2*beta_3/beta_2*HI_z*(e_lz'*e_lz + e_rz'*e_rz);
     
-    disp('Kronecker time')
     % SBP operators
     D_xy = sparse(kron(speye(m_y), D_x) + kron(D_y, speye(m_x)));
     disp('Dxy done')
@@ -119,7 +115,7 @@ function [u, simname, alva] = make_ref(f, T, dim, olle)
     % ====================================================
     % INFOSTRING
     disp(['Frequency: ', num2str(w/(2*pi)), ' Hz']);
-    disp(['Number of gridpoints: ', num2str(size(X_vec))])
+    disp(['Number of gridpoints: ', num2str(m_x), ', ', num2str(m_y), ', ', num2str(m_z)])
     disp(['Simulation time: ', num2str(T), 's'])
     disp(['Number of steps: ', num2str(m_t)])
     
@@ -129,9 +125,8 @@ function [u, simname, alva] = make_ref(f, T, dim, olle)
     disp(append('Test: ', simname));
     
     % Create folder for this test
-    %location = append('Testdata/', simname);
-    %mkdir(location)
-    location = append('Testdata');
+    location = append('Testdata/', simname);
+    mkdir(location)
 
     sim_info = append(location, '/INFO.mat');
     save(sim_info, 'simname', 'T', 'f', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring', '-v7.3')
