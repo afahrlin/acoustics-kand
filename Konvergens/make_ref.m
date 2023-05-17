@@ -142,9 +142,9 @@ function [u, simname, alva] = make_ref(f, T, dim, olle)
             stepname = append(location, '/', num2str(key), '_', num2str(time_step), '.mat');
             save(stepname, 'p');
         end
-        
-        % Alert every 500th timestep
-        if mod(time_step, 500) == 0
+
+        % Alert every 100th timestep
+        if mod(time_step, 100) == 0
             disp([num2str(time_step), '/', num2str(m_t)])
         end
     end

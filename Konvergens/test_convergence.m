@@ -3,35 +3,45 @@
 f = 70; % Hz
 T = 0.4; % s
 
-load('Konvergens/points.mat');
+all_points = sortrows(cell2mat(struct2cell(load('Konvergens/points.mat'))));
 
-[uref, refname] = make_ref(f, T, k5);
-location = append('Testdata/', refname);
-save(append(location, '/conv_test.mat'), 'uref', '-v7.3');
+location = 'Testdata/conv_test';
+mkdir(location);
 
-[u1, name_1] = make_test(f, T, k1);
-[u2, name_2] = make_test(f, T, k2);
-[u3, name_3] = make_test(f, T, k3);
-[u4, name_4] = make_test(f, T, k4);
+[uref, refname, ~] = make_ref(f, T, all_points(12));
+save(append(location, '/ref.mat'), 'uref', 'refname', '-v7.3');
+disp('Reference made');
 
-save(append(location, '/conv_test.mat'), 'u1', 'u2', 'u3', 'u4', '-v7.3');
+for i = [1, 2, 3, 6]
+    dim = all_points(i,1:3);
+    n = 12/all_points(i, 4);
+    
+    [u, simname, H] = make_test(f, T, dim);
+    
+    simname = append(simname, '_', num2str(n));
+    disp(append('Test made ', num2str(n))); 
+    
+    ref = permute(uref, [2,1,3]);        
+    ref = ref(1:n:end, 1:n:end, 1:n:end);
+    ref = reshape(ref, numel(ref), 1);
+    
+    diff = ref - reshape(u, numel(u), 1);
+    norm = diff'*H*diff;
+    disp(append('Norm: ', norm));
+    save(append(location, '/', simname, '.mat'), 'u', 'diff', 'norm', 'n', 'H', '-v7.3');
+    
+end
 
-disp('Data saved');
-disp(simname);
+disp('All tests made');
 
-% tests = [u1, u2, u3, u4];
-% names = [name_1, name_2, name_3, name_4];
-% max_diffs = zeros(1, 4);
-%
-% for i = 1:4
-%     s = 2^(5 - i);
-%     newref = uref(1:s:end, 1:s:end, 1:s:end);
-%     diff = tests(1) - newref;
+for i = [1, 2, 3, 6]
+    n = all_points(i, 4);
+    
+    ref = permute(uref, [2,1,3]);        
+    ref = ref(1:n:end, 1:n:end, 1:n:end);
+    ref = reshape(ref, numel(ref), 1);
+    
+    diff = ref - 
 
-%   MAX DIFF APPROACH
-%     max_diff = max(abs(diff));
-%     diffs(i) = max_diff;
-
-%   L2 NORM APPROACH?
-% end
+end
 

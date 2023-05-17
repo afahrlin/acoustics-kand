@@ -1,12 +1,13 @@
 % Making convergence test data
 
-function [u, simname] = make_test(f, T, dim)
+function [u, simname, H] = make_test(f, T, dim)
 
     save_time_steps = false;    % If true, save time-steps
-    
+    tic
     % ====================================================
     % Model parameters
     
+    % Define boundaries (m)
     x_l = 0;           % Left boundary of x
     x_r = 6.24;            % Right boundary of x
     L_x = x_r-x_l;      % Length of x interval
@@ -22,26 +23,23 @@ function [u, simname] = make_test(f, T, dim)
     m_y = dim(2);
     m_z = dim(3);
     m = m_x*m_y*m_z;
-
+    disp(append('m: ', num2str(m)));
+    
     % ====================================================
     % PDE parameters
 
-    c = 343;              % Wave speed (m/s)
+    c = 343;            % Wave speed (m/s)
     beta_2 = c;
-    beta_3 = 0.15;            % Absorption
-
-    % ====================================================
-    % Initial condition parameters
     
-    vol = 80;
-    Pvol = 20*10^(-6) * 10^(20/vol);
-    w = 2*pi*f;               % Angular frequency 
-    amp = 4*pi*3*Pvol;        % Amplitude
-    amp_ps = amp;
+    % Determine beta_3 based on reflection coefficient
+    R = 0;              % Reflection rate, must be between 0 and 1
+    p = [-0.454, 1.34, -1.883, 0.997-R];
+    r = roots(p);
+    beta_3 = r(3); 
     
     % ====================================================
-    % SBP-SAT approximation
-
+    % Discretization
+    
     % Spatial discretization
     h_x = L_x / (m_x - 1);
     x_vec = linspace(x_l, x_r, m_x);
@@ -52,32 +50,46 @@ function [u, simname] = make_test(f, T, dim)
     [X_vec, Y_vec, Z_vec] = meshgrid(x_vec, y_vec, z_vec);
 
     % Time discretization
-    h_t = 0.25*max([h_x, h_y, h_z])/c;
+    h_t = 0.1*max([h_x, h_y, h_z])/c;
     m_t = round(T/h_t,0);
     h_t = T/m_t;
 
     disp('Discretization Done')
-
+    
+    % ====================================================
+    % Initial condition parameters
+    
+    vol = 80;
+    %Pvol = 20*10^(-6) * 10^(20/vol);
+    Pvol = 1;
+    w = 2*pi*f;                 % Angular frequency 
+    amp = olle*Pvol/(h_y*h_z);       % Amplitude
+    amp_ps = amp;
+    
+    % ====================================================
+    % SBP-SAT method
+    
     % Get D2 operator - x
-    [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_4th(m_x, h_x);
+    [H_x, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_4th(m_x, h_x);
     % SBP-SAT
     D_x = c^2*(D2_x + HI_x*e_lx'*d1_lx - HI_x*e_rx'*d1_rx);
     E_x = -c^2*beta_3/beta_2*HI_x*(e_lx'*e_lx + e_rx'*e_rx);
 
     % Get D2 operator - y
-    [~, HI_y, ~, D2_y, e_ly, e_ry, d1_ly, d1_ry] = sbp_cent_4th(m_y, h_y);
+    [H_y, HI_y, ~, D2_y, e_ly, e_ry, d1_ly, d1_ry] = sbp_cent_4th(m_y, h_y);
     % SBP-SAT
     D_y = c^2*(D2_y + HI_y*e_ly'*d1_ly - HI_y*e_ry'*d1_ry);
     E_y = -c^2*beta_3/beta_2*HI_y*(e_ly'*e_ly + e_ry'*e_ry);
     
     % Get D2 operator - z
-    [~, HI_z, ~, D2_z, e_lz, e_rz, d1_lz, d1_rz] = sbp_cent_4th(m_z, h_z);
+    [H_z, HI_z, ~, D2_z, e_lz, e_rz, d1_lz, d1_rz] = sbp_cent_4th(m_z, h_z);
     % SBP-SAT
     D_z = c^2*(D2_z + HI_z*e_lz'*d1_lz - HI_z*e_rz'*d1_rz);
     E_z = -c^2*beta_3/beta_2*HI_z*(e_lz'*e_lz + e_rz'*e_rz);
     
     % SBP operators
     D_xy = sparse(kron(speye(m_y), D_x) + kron(D_y, speye(m_x)));
+    disp('Dxy done')
     clear D_x D_y
     D = sparse(kron(speye(m_z), D_xy) + kron(D_z, speye(m_x*m_y)));
     clear D_z
@@ -88,31 +100,31 @@ function [u, simname] = make_test(f, T, dim)
     E = sparse(kron(speye(m_z), E_xy) + kron(E_z, speye(m_x*m_y)));
     clear E_z
     disp('E-Operator Done')
+    
+    H_xy = sparse(kron(speye(m_y), H_x) + kron(H_y, speye(m_x)));
+    H = sparse(kron(speye(m_z), H_xy) + kron(H_z, speye(m_x*m_y)));
+    clear H_x H_y H_z
 
     % Construct matrix A: u_t = Au with u = [phi, phi_t]^T
     % [0, I;
     %  D, E]
-    A = sparse(2*m,2*m);
-    A(1:m, m+1:end) = speye(m);
-    A(m+1:end, 1:m) = D;
-    A(m+1:end, m+1:end) = E;
-    disp('A-Matrix Done')
+    A = [sparse(m,m), speye(m); D, E];
+    clear D E
+    disp('A-Matrix Done') 
     
     % Set initial values
-    u = zeros(2*m, 1) + 20*10^(-6);
-    t = 0;
+    u = zeros(2*m, 1);  % Initial pressure deviation
+    t = 0;              % Initial time
     
     % ====================================================
     % INFOSTRING
     disp(['Frequency: ', num2str(w/(2*pi)), ' Hz']);
-    disp(['Number of gridpoints: ', num2str(size(X_vec))])
+    disp(['Number of gridpoints: ', num2str(m_x), ', ', num2str(m_y), ', ', num2str(m_z)])
     disp(['Simulation time: ', num2str(T), 's'])
     disp(['Number of steps: ', num2str(m_t)])
     
     % Generate id for this test
-    key = join(string(randi(9,4,1)));
-    key = strrep(key,' ','');
-    infostring = string(append(key, '__', num2str(f), 'Hz_', num2str(m), 'points_', num2str(m_t), 'steps_'));
+    infostring = string(append(num2str(f), 'Hz_', num2str(m), 'points_', num2str(m_t), 'steps_'));
     simname = append(num2str(f), 'Hz_', num2str(m), 'points');
     disp(append('Test: ', simname));
     
@@ -121,7 +133,7 @@ function [u, simname] = make_test(f, T, dim)
     mkdir(location)
 
     sim_info = append(location, '/INFO.mat');
-    save(sim_info, 'simname', 'key', 'f', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring', '-v7.3')
+    save(sim_info, 'simname', 'T', 'f', 'X_vec', 'Y_vec', 'Z_vec', 'h_t', 'm_t', 'm_x', 'm_y', 'm_z', 'm', 'L_x', 'L_y', 'L_z', 'infostring', '-v7.3')
     disp('Parameters saved');
     % ====================================================
     
@@ -135,14 +147,14 @@ function [u, simname] = make_test(f, T, dim)
             save(stepname, 'p');
         end
         
-        % Alert every 100th timestep
-        if mod(time_step, 100) == 0
+        % Alert every 50th timestep
+        if mod(time_step, 50) == 0
             disp([num2str(time_step), '/', num2str(m_t)])
         end
     end
     
     u = reshape(u(1:m), m_x, m_y, m_z);
-    
+    toc
     
     % ====================================================
     % Define functions used in code 
@@ -150,41 +162,39 @@ function [u, simname] = make_test(f, T, dim)
     % Define rhs of the semi-discrete approximation
     function u_t = rhs(u) 
         u_t = A*u;
-    end
-
-    function v = F(t)
-        g_lx = sparse(m_y, m_z);
-        g_lx(round(0.25*m_y,0), round(m_z*0.5, 0)) = -amp*cos(w*t);
-        g_lx(round(0.75*m_y,0), round(m_z*0.5, 0)) = -amp*cos(w*t);
-        G_lx = reshape(g_lx, 1, m_y*m_z);
-        v = reshape((c^2*HI_x*e_lx'*G_lx), m, 1);
     end 
 
+    % Update value of point sources
     function v = F2(t, v)
-        if t < 0.05
-            amp_ps = amp*t/0.05;
-        end
+%         % For a 'smooth' start
+%         if t < 0.01
+%             amp_ps = amp*t/0.01;
+%         else
+%             amp_ps = amp;
+%         end
 
         % One point source in the middle
         %v(round(m_x*m_y*m_z/2, 0)+m_x*m_y) = amp*sin(w*t);
+        v(round(m/2) - m_x*round(m_y/2) + round(m_x*m_y/2)) = amp_ps*sin(w*t);
         
         % Two point sources on boundary
-        v((round(m_x*m_y*m_z/2, 0)-m_x*round(0.25*m_y, 0))+round(0.5*m_x*m_y)) = amp_ps*sin(w*t);
-        v((round(m_x*m_y*m_z/2, 0)-m_x*round(0.75*m_y, 0))+round(0.5*m_x*m_y)) = amp_ps*sin(w*t);
+        %v((round(m_x*m_y*m_z/2, 0)-m_x*round(0.25*m_y, 0))+round(0.5*m_x*m_y)) = amp_ps*sin(w*t);
+        %v((round(m_x*m_y*m_z/2, 0)-m_x*round(0.75*m_y, 0))+round(0.5*m_x*m_y)) = amp_ps*sin(w*t);
     end
 
     % Time step with rk4
     function [v, t] = steprk4(v, t, dt)
-        v = F2(t, v);
-        k1 = dt*rhs(v);
-        v = F2(t+dt/4, v);
-        k2 = dt*rhs(v+0.5*k1);
-        v = F2(t+dt/2, v);
-        k3 = dt*rhs(v+0.5*k2);
-        v = F2(t+3*dt/4, v);
-        k4 = dt*rhs(v+k3);
+        % Rk4 coefficients
+        k1 = dt*rhs(t, v);
+        k2 = dt*rhs(t+0.5*dt, v+0.5*k1);
+        k3 = dt*rhs(t+0.5*dt, v+0.5*k2);
+        k4 = dt*rhs(t+dt, v+k3);
 
+        % Calc new value and time
         v = v + 1/6*(k1 + 2*k2 + 2*k3 + k4);
         t = t + dt;
+        
+        % Update point sources for the plot
+        v = F2(t, v);
     end
 end

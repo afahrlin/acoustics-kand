@@ -11,12 +11,12 @@ function amp_test()
     save(append(location, 'u1.mat'), 'u1', '-v7.3');
     disp('Data saved');
     disp(simname);
-    disp(append('Alva: ', alva));
+    disp(append('Alva: ', num2str(alva)));
 
     [u2, simname, alva] = make_ref(f, T, dim, 1/alva);
 
     save(append(location, 'u2.mat'), 'u2', '-v7.3');
     disp('Data saved');
     disp(simname);
-    disp(append('Alva: ', alva));
+    disp(append('Alva: ', num2str(alva)));
 end
