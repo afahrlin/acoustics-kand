@@ -1,9 +1,9 @@
 % Convergence test for 3D wave equation
 
-f = 70; % Hz
-T = 0.4; % s
+f = 200; % Hz
+T = 0.036; % s
 
-all_points = sortrows(cell2mat(struct2cell(load('Konvergens/points.mat'))));
+all_points = sortrows(cell2mat(struct2cell(load('points.mat'))));
 
 location = 'Testdata/conv_test';
 mkdir(location);

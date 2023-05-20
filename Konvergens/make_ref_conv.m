@@ -1,6 +1,6 @@
 % Making reference
 
-function [u, simname, alva] = make_ref(f, T, dim, olle, key)
+function make_ref_conv(f, T, dim, key, op)
 
     save_time_steps = false;    % If true, save time-steps
     tic
@@ -63,27 +63,32 @@ function [u, simname, alva] = make_ref(f, T, dim, olle, key)
     %Pvol = 20*10^(-6) * 10^(20/vol);
     Pvol = 1;
     w = 2*pi*f;                 % Angular frequency 
-    amp = olle*Pvol/(h_y*h_z);       % Amplitude
+    amp = 1/17.0852*Pvol/(h_y*h_z);       % Amplitude
     amp_ps = amp;
 
     % ====================================================
     % SBP-SAT method
     
-    % Get D2 operator - x
-    [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_6th(m_x, h_x);
+    % Getting operators
+    if op == 6
+        disp('6th order operators')
+        [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_6th(m_x, h_x);
+        [~, HI_y, ~, D2_y, e_ly, e_ry, d1_ly, d1_ry] = sbp_cent_6th(m_y, h_y);
+        [~, HI_z, ~, D2_z, e_lz, e_rz, d1_lz, d1_rz] = sbp_cent_6th(m_z, h_z);
+    elseif op == 4
+        disp('4th order operators')
+        [~, HI_x, ~, D2_x, e_lx, e_rx, d1_lx, d1_rx] = sbp_cent_4th(m_x, h_x);
+        [~, HI_y, ~, D2_y, e_ly, e_ry, d1_ly, d1_ry] = sbp_cent_4th(m_y, h_y);
+        [~, HI_z, ~, D2_z, e_lz, e_rz, d1_lz, d1_rz] = sbp_cent_4th(m_z, h_z);
+    end
+    
     % SBP-SAT
     D_x = c^2*(D2_x + HI_x*e_lx'*d1_lx - HI_x*e_rx'*d1_rx);
     E_x = -c^2*beta_3/beta_2*HI_x*(e_lx'*e_lx + e_rx'*e_rx);
-
-    % Get D2 operator - y
-    [~, HI_y, ~, D2_y, e_ly, e_ry, d1_ly, d1_ry] = sbp_cent_6th(m_y, h_y);
-    % SBP-SAT
+    
     D_y = c^2*(D2_y + HI_y*e_ly'*d1_ly - HI_y*e_ry'*d1_ry);
     E_y = -c^2*beta_3/beta_2*HI_y*(e_ly'*e_ly + e_ry'*e_ry);
     
-    % Get D2 operator - z
-    [~, HI_z, ~, D2_z, e_lz, e_rz, d1_lz, d1_rz] = sbp_cent_6th(m_z, h_z);
-    % SBP-SAT
     D_z = c^2*(D2_z + HI_z*e_lz'*d1_lz - HI_z*e_rz'*d1_rz);
     E_z = -c^2*beta_3/beta_2*HI_z*(e_lz'*e_lz + e_rz'*e_rz);
     
@@ -121,11 +126,11 @@ function [u, simname, alva] = make_ref(f, T, dim, olle, key)
     
     % Generate id for this test
     infostring = string(append(num2str(f), 'Hz_', num2str(m), 'points_', num2str(m_t), 'steps_'));
-    simname = append(num2str(f), 'Hz_', num2str(m), 'points');
+    simname = append(num2str(f), 'Hz_', num2str(m), 'points_', key);
     disp(append('Test: ', simname));
     
     % Create folder for this test
-    location = append('Testdata/', simname, '_', key);
+    location = append('Testdata/conv_test/', simname);
     mkdir(location)
 
     sim_info = append(location, '/INFO.mat');
@@ -148,9 +153,9 @@ function [u, simname, alva] = make_ref(f, T, dim, olle, key)
             disp([num2str(time_step), '/', num2str(m_t)])
         end
     end
-    
-    alva = u(round(m*0.5) - m_x*round(0.5*m_y) + m_y*round(0.5*m_x) + round(m_x/L_x));
+
     u = reshape(u(1:m), m_x, m_y, m_z);
+    save(append(location, '/u.mat'), 'u', '-v7.3')
     toc
     
     % ====================================================
@@ -163,20 +168,20 @@ function [u, simname, alva] = make_ref(f, T, dim, olle, key)
 
     % Update value of point sources
     function v = F2(t, v)
-%         % For a 'smooth' start
-%         if t < 0.01
-%             amp_ps = amp*t/0.01;
-%         else
-%             amp_ps = amp;
-%         end
+        % For a 'smooth' start
+        if t < 0.01
+            amp_ps = amp*t/0.01;
+        else
+            amp_ps = amp;
+        end
 
         % One point source in the middle
         %v(round(m_x*m_y*m_z/2, 0)+m_x*m_y) = amp*sin(w*t);
-        v(round(m/2) - m_x*round(m_y/2) + round(m_x*m_y/2)) = amp_ps*sin(w*t);
+        %v(round(m/2) - m_x*round(m_y/2) + round(m_x*m_y/2)) = amp_ps*sin(w*t);
         
         % Two point sources on boundary
-        %v((round(m_x*m_y*m_z/2, 0)-m_x*round(0.25*m_y, 0))+round(0.5*m_x*m_y)) = amp_ps*sin(w*t);
-        %v((round(m_x*m_y*m_z/2, 0)-m_x*round(0.75*m_y, 0))+round(0.5*m_x*m_y)) = amp_ps*sin(w*t);
+        v((round(m_x*m_y*m_z/2, 0)-m_x*round(0.25*m_y, 0))+round(0.5*m_x*m_y)) = amp_ps*sin(w*t);
+        v((round(m_x*m_y*m_z/2, 0)-m_x*round(0.75*m_y, 0))+round(0.5*m_x*m_y)) = amp_ps*sin(w*t);
     end
 
     % Time step with rk4
