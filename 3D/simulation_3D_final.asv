@@ -23,7 +23,6 @@ function simulation_3D_final()
     % Model parameters
     
     T = 1;              % Final time (seconds)
-    f = 200;            % Frequency (Hz)
     s = 1;              % plot every s time-steps
     
     % Define boundaries (m)
@@ -74,15 +73,17 @@ function simulation_3D_final()
     [X_vec, Y_vec, Z_vec] = meshgrid(x_vec, y_vec, z_vec);
     
     disp(['Step size x: ', num2str(h_x)]);
-    disp(['Step size y: ', num2str(h_y)]);
-    disp(['Step size z: ', num2str(h_z)]);
+    disp(['Step size x: ', num2str(h_x)]);
+    disp(h_z);
     
     % Time discretization
-    h = max([h_x, h_y, h_z]);   % Since h is not exactly the same in xyz
-    % Stability constraints derived in report, stable for all tests so far
+%     h_t = 0.1*max([h_x, h_y, h_z])/c;
+    h = max([h_x, h_y, h_z]);
     if R < 0.2
+%         h_t = 0.001*max([h_x, h_y, h_z]);
         h_t = 0.95*2.6e-4*(1.556*h^2+3.866*h);
     else
+%         h_t = 0.002*max([h_x, h_y, h_z]);
         h_t = 0.95*1.85*2.6e-4*(1.556*h^2+3.866*h);
     end
     m_t = round(T/h_t,0);
@@ -93,17 +94,18 @@ function simulation_3D_final()
     % Point source parameters
     
     % Point source frequency
-%     lambda = max([L_x L_y L_z]);    % Longest wave resonant with the room
-%     k = 4;                          % Which overtone
-%     f = k*c/lambda;                 % Frequency
+    lambda = max([L_x L_y L_z]);    % Longest wave resonant with the room
+    k = 4;                          % Which overtone
+    f = k*c/lambda;                 % Frequency
+%     f = 200;        % Frequency
     w = 2*pi*f;     % Angular frequency
     
     % Point source amplitude
-    vol = 80;                       % Speaker volume (dB 1m from speaker)
-    Pvol = 20*10^(-6)*10^(vol/20);  % Pressure 1m from speaker
-    K = 17.0852;                    % From test with a very fine grid, h=0.01
-    amp = Pvol/(K*h_y*h_z);         % Scaling of amplitude in point source
-    amp_ps = amp;                   % Constant amp of point source
+    vol = 80;                           % Speaker volume
+    Pvol = 20*10^(-6) * 10^(vol/20);    % Pressure 1m from speaker
+    K = 17.0852;
+    amp = Pvol/(K*h_y*h_z);        % Amplitude of point source
+    amp_ps = amp;                       % Constant amp of point source
     
     % Plot amplitude
     z = [-Pvol/4 Pvol/4];
@@ -136,6 +138,7 @@ function simulation_3D_final()
     
     E_xy = sparse(kron(speye(m_y), E_x) + kron(E_y, speye(m_x)));
     E = sparse(kron(speye(m_z), E_xy) + kron(E_z, speye(m_x*m_y)));
+    
     disp('E-Operator Done')
     
     % Construct matrix A: v_t = Av with v = [p, p_t]^T
@@ -144,10 +147,10 @@ function simulation_3D_final()
     A = [sparse(m,m), speye(m); D, E];
     disp('A-Matrix Done')
     
-    % Calculate and plot eigenvalues of A
+    % Plot eigenvalues
     if calc_eigenvalues
-%         e = eig(full(A));     % Only works for very low res grids
-        e = eigs(A);    % Returns the 6 highest magnitude eigenvalues of A
+%         e = eig(full(A));
+        e = eigs(A);
         real_e = real(e);
         imag_e = imag(e);
         disp(['Max real eigenvalue: ', num2str(max(real_e))])
@@ -157,9 +160,9 @@ function simulation_3D_final()
         disp(['Max magnitude eigenvalue: ', num2str(max(abs(e)))])
         disp(['Min magnitude eigenvalue: ', num2str(min(abs(e)))])
         disp('Eigenvalues Done');
-        plot(real_e, imag_e, 'ko');
-        xlim([-max(abs(e)) max(abs(e))])
-        ylim([-max(abs(e)) max(abs(e))])
+%         plot(real_e, imag_e, 'ko');
+%         xlim([-max(abs(e)) max(abs(e))])
+%         ylim([-max(abs(e)) max(abs(e))])
     end
     
     % Set initial values
@@ -193,7 +196,7 @@ function simulation_3D_final()
     end
     
     % =====================================================================
-    % Step through time and plot
+    % Plot and time step
     
     % Initialize 1D plot
     if plot_time_steps_1d
@@ -291,6 +294,23 @@ function simulation_3D_final()
         end
     end
     
+%     disp(u((round(m*0.5, 0)-m_x*round(0.5*m_y, 0))+...
+%             round(0.5*m_x*m_y)+round(1/L_x*m_x)));
+        
+%     x_test = permute(X_vec, [2, 1, 3]);
+%     x_test = reshape(x_test, m, 1);
+%     disp(x_test((round(m_x*m_y*m_z/2, 0)-m_x*round(0.5*m_y, 0))+...
+%             round(0.5*m_x*m_y)));
+%     
+%     y_test = permute(Y_vec, [2, 1, 3]);
+%     y_test = reshape(y_test, m, 1);
+%     disp(y_test((round(m_x*m_y*m_z/2, 0)-m_x*round(0.5*m_y, 0))+...
+%             round(0.5*m_x*m_y)));
+%     
+%     z_test = permute(Z_vec, [2, 1, 3]);
+%     z_test = reshape(z_test, m, 1);
+%     disp(z_test((round(m_x*m_y*m_z/2, 0)-m_x*round(0.5*m_y, 0))+...
+%             round(0.5*m_x*m_y)));
     
     % =====================================================================
     % Define functions used in code 
