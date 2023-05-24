@@ -16,14 +16,14 @@
 function simulation_3D_final()
     calc_eigenvalues = false;       % If true, calc eigenvalues of A
     plot_time_steps_1d = false;     % If true, plot time steps 1d
-    plot_time_steps_2d = false;     % If true, plot time steps 2d
+    plot_time_steps_2d = true;     % If true, plot time steps 2d
     save_time_steps = false;        % If true, save time steps
     
     % =====================================================================
     % Model parameters
     
     T = 1;              % Final time (seconds)
-    f = 200;            % Frequency (Hz)
+    f = 110;            % Frequency (Hz)
     s = 1;              % plot every s time-steps
     
     % Define boundaries (m)
@@ -106,7 +106,7 @@ function simulation_3D_final()
     amp_ps = amp;                   % Constant amp of point source
     
     % Plot amplitude
-    z = [-Pvol/4 Pvol/4];
+    z = [-Pvol*4 Pvol*4];
 
     % ================================================================
     % SBP-SAT method
@@ -290,6 +290,12 @@ function simulation_3D_final()
             drawnow;
         end
     end
+    
+    disp(u(1:5));
+    u = reshape(u(1:m), m_x, m_y, m_z);
+    disp(u(1:5,1,1));
+    u = reshape(u, numel(u), 1);
+    disp(u(1:5))
     
     
     % =====================================================================

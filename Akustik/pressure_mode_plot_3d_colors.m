@@ -3,9 +3,9 @@
 L_x = 6.24;
 L_y = 3.84;
 L_z = 2.4;
-n_x = 3;
+n_x = 2;
 n_y = 2;
-n_z = 1;
+n_z = 0;
 
 x = linspace(0, L_x, 100);
 y = linspace(0, L_y, 100);
@@ -16,9 +16,9 @@ z = linspace(0, L_z, 100);
 [X_plot_side, Z_plot_side] = meshgrid(x,z);
 [Y_plot_front, Z_plot_front] = meshgrid(y,z);
 
-c = [0 1];
+c = [-1 1];
 
-P = abs(pressure_mode(1.00001, X, Y, Z, n_x, n_y, n_z, L_x, L_y, L_z));
+P = pressure_mode(1.00001, X, Y, Z, n_x, n_y, n_z, L_x, L_y, L_z);
 
 % newpoints = 100;
 % [xq,yq] = meshgrid(...
@@ -33,10 +33,10 @@ P = permute(P, [2 1 3]);
 figure();
 v = -1:0.01:1;
 v2 = [-1,-.75,-.5,-.25,0,.25,.50,.75,1];
-[C,h] = contourf(X_plot_top, Y_plot_top, transpose(P(:,:,1)), v);
+[C,h] = contourf(X_plot_top, Y_plot_top, transpose(P(:,:,end)), v);
 set(h, 'edgecolor','none');
 hold on
-[C,h] = contour(X_plot_top, Y_plot_top, transpose(P(:,:,1)), v2, 'k');
+[C,h] = contour(X_plot_top, Y_plot_top, transpose(P(:,:,end)), v2, 'k');
 clabel(C,h,v2,'FontSize',8,'labelspacing', 1000)
 % colormap jet
 caxis(c);
